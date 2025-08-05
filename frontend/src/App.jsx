@@ -25,15 +25,14 @@ function App() {
   }, []);
 
   const handleLogin = (userData) => {
-    const updatedUser = { ...userData, isLoggedIn: true };
-    setUser(updatedUser);
-    setStorageData('currentUser', updatedUser);
-    setView(
-      updatedUser.role === 'tutor' && !updatedUser.profileComplete
-        ? 'profile-setup'
-        : 'dashboard'
-    );
-  };
+  setUser(userData);
+  if (!userData.profileComplete && userData.role === 'tutor') {
+    setView('profile-setup');
+  } else {
+    setView('dashboard');
+  }
+};
+
 
   const handleLogout = () => {
     if (user) {
