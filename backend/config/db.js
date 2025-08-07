@@ -1,20 +1,17 @@
-// config/db.js
-const { MongoClient } = require('mongodb');
+// backend/config/db.js
+const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
-const uri = process.env.MONGO_URI;
-const client = new MongoClient(uri); // Simplified constructor
-
-async function connectDB() {
+const connectDB = async () => {
   try {
-    await client.connect();
-    console.log("✅ MongoDB connected successfully");
-  } catch (err) {
-    console.error("❌ MongoDB connection failed", err);
-    process.exit(1); // Exit on error
+    const conn = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`✅ MongoDB Connected: ${conn.connection.name}`);
+  } catch (error) {
+    console.error(`❌ Error: ${error.message}`);
+    process.exit(1);
   }
-}
+};
 
-module.exports = connectDB;
+module.exports = { connectDB };
