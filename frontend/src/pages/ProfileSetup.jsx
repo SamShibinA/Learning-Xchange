@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -9,11 +9,22 @@ import {
   Chip,
   InputAdornment,
   Tooltip,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
-import { User, DollarSign, ArrowLeft, Plus, X } from 'lucide-react';
-import { saveUser } from '../utils/storage';
+import { User, DollarSign, ArrowLeft, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ProfileSetup = ({ user, onComplete, onBack }) => {
+  const navigate = useNavigate();
+
+  // Redirect if profile is already complete
+  useEffect(() => {
+    if (user.profileComplete) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user.profileComplete, navigate]);
+
   const [name, setName] = useState(user.name || '');
   const [bio, setBio] = useState(user.bio || '');
   const [skills, setSkills] = useState(user.skills || []);
@@ -21,17 +32,20 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
   const [hourlyRate, setHourlyRate] = useState(user.hourlyRate || 0);
   const [newSkill, setNewSkill] = useState('');
   const [newInterest, setNewInterest] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   const suggestedSkills = [
     'JavaScript', 'Python', 'React', 'Node.js', 'Data Science',
     'Machine Learning', 'UI/UX Design', 'Digital Marketing',
-    'Mathematics', 'Physics', 'English', 'Spanish', 'French'
+    'Mathematics', 'Physics', 'English', 'Spanish', 'French',
   ];
 
   const suggestedInterests = [
     'Web Development', 'Mobile Development', 'Data Science',
     'AI & Machine Learning', 'Design', 'Marketing',
-    'Languages', 'Mathematics', 'Science', 'Business'
+    'Languages', 'Mathematics', 'Science', 'Business',
   ];
 
   const addItem = (item, setItemList, itemList, setInput) => {
@@ -46,9 +60,13 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
     setItemList((prev) => prev.filter((i) => i !== item));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
+    // Construct updated user profile data
     const updatedUser = {
       ...user,
       name,
@@ -59,8 +77,33 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
       profileComplete: true,
     };
 
-    saveUser(updatedUser);
-    onComplete(updatedUser);
+    try {
+      // Get token from user object or localStorage fallback
+      const token = user.token || localStorage.getItem('token');
+      if (!token) throw new Error('Authentication token missing. Please login again.');
+
+      const res = await fetch('http://localhost:5000/api/profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(updatedUser),
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        setSuccess(result.message || 'Profile updated successfully.');
+        onComplete(result.data); // send updated user data back to parent
+      } else {
+        throw new Error(result.message || 'Failed to update profile.');
+      }
+    } catch (err) {
+      setError(err.message || 'Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -69,7 +112,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
         <Paper elevation={3} sx={{ borderRadius: 4, p: 4 }}>
           <Box display="flex" alignItems="center" mb={4}>
             <Tooltip title="Back">
-              <IconButton onClick={onBack}>
+              <IconButton onClick={onBack} disabled={loading}>
                 <ArrowLeft size={20} />
               </IconButton>
             </Tooltip>
@@ -84,6 +127,17 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
               </Typography>
             </Box>
           </Box>
+
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          {success && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              {success}
+            </Alert>
+          )}
 
           <form onSubmit={handleSubmit}>
             <TextField
@@ -101,6 +155,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                   </InputAdornment>
                 ),
               }}
+              disabled={loading}
             />
 
             {user.role === 'tutor' && (
@@ -110,17 +165,19 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                   multiline
                   rows={4}
                   fullWidth
-                  placeholder="Tell learners about your experience, teaching style, and passions..."
+                  placeholder="Tell learners about your experience..."
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   margin="normal"
                   required
+                  inputProps={{ maxLength: 500 }}
+                  disabled={loading}
                 />
                 <Typography variant="caption" color="text.secondary">
                   {bio.length}/500 characters
                 </Typography>
 
-                {/* Skills Input */}
+                {/* Skills */}
                 <Box mt={3}>
                   <Typography variant="subtitle1">Skills & Expertise</Typography>
                   <Box display="flex" gap={1} mt={1}>
@@ -130,12 +187,16 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                       value={newSkill}
                       onChange={(e) => setNewSkill(e.target.value)}
                       onKeyDown={(e) =>
-                        e.key === 'Enter' && (e.preventDefault(), addItem(newSkill, setSkills, skills, setNewSkill))
+                        e.key === 'Enter' &&
+                        (e.preventDefault(),
+                        addItem(newSkill, setSkills, skills, setNewSkill))
                       }
+                      disabled={loading}
                     />
                     <IconButton
                       color="primary"
                       onClick={() => addItem(newSkill, setSkills, skills, setNewSkill)}
+                      disabled={loading}
                     >
                       <Plus size={18} />
                     </IconButton>
@@ -148,6 +209,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                         onDelete={() => removeItem(skill, setSkills)}
                         color="primary"
                         variant="outlined"
+                        disabled={loading}
                       />
                     ))}
                   </Box>
@@ -165,6 +227,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                           label={`+ ${skill}`}
                           onClick={() => setSkills([...skills, skill])}
                           variant="outlined"
+                          disabled={loading}
                         />
                       ))}
                   </Box>
@@ -185,6 +248,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                         </InputAdornment>
                       ),
                     }}
+                    disabled={loading}
                   />
                   <Typography variant="caption" color="warning.main" mt={1} display="block">
                     <strong>Note:</strong> You’ll need a 4+ star rating before charging for sessions.
@@ -204,12 +268,15 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                     onChange={(e) => setNewInterest(e.target.value)}
                     onKeyDown={(e) =>
                       e.key === 'Enter' &&
-                      (e.preventDefault(), addItem(newInterest, setInterests, interests, setNewInterest))
+                      (e.preventDefault(),
+                      addItem(newInterest, setInterests, interests, setNewInterest))
                     }
+                    disabled={loading}
                   />
                   <IconButton
                     color="primary"
                     onClick={() => addItem(newInterest, setInterests, interests, setNewInterest)}
+                    disabled={loading}
                   >
                     <Plus size={18} />
                   </IconButton>
@@ -222,6 +289,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                       onDelete={() => removeItem(interest, setInterests)}
                       color="success"
                       variant="outlined"
+                      disabled={loading}
                     />
                   ))}
                 </Box>
@@ -239,6 +307,7 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
                         label={`+ ${interest}`}
                         onClick={() => setInterests([...interests, interest])}
                         variant="outlined"
+                        disabled={loading}
                       />
                     ))}
                 </Box>
@@ -246,11 +315,11 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
             )}
 
             <Box display="flex" gap={2} mt={5}>
-              <Button variant="outlined" fullWidth onClick={onBack}>
+              <Button variant="outlined" fullWidth onClick={onBack} disabled={loading}>
                 Back
               </Button>
-              <Button type="submit" variant="contained" fullWidth>
-                Complete Profile
+              <Button type="submit" variant="contained" fullWidth disabled={loading}>
+                {loading ? <CircularProgress size={20} /> : 'Complete Profile'}
               </Button>
             </Box>
           </form>

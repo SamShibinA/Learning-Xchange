@@ -1,22 +1,18 @@
-require('dotenv').config();
-
 const User = require('../models/userModel');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const JWT_SECRET = process.env.JWT_SECRET || 'yourSecretKey';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const generateToken = (userId) => jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1d' });
 
-// ✅ REGISTER
 const register = async (req, res) => {
   const { name, email, password, role } = req.body;
   try {
-    const existing = await User.findOne({ email });
-    if (existing) {
+    if (await User.findOne({ email })) {
       return res.status(400).json({ message: 'Email already exists' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const newUser = new User({
       name,
       email,
@@ -26,8 +22,7 @@ const register = async (req, res) => {
     });
 
     await newUser.save();
-
-    const token = jwt.sign({ id: newUser._id }, JWT_SECRET, { expiresIn: '1d' });
+    const token = generateToken(newUser._id);
 
     res.status(201).json({
       message: 'User registered successfully',
@@ -36,30 +31,26 @@ const register = async (req, res) => {
         name: newUser.name,
         email: newUser.email,
         role: newUser.role,
+        profileComplete: newUser.profileComplete,
       },
-      token
+      token,
     });
   } catch (err) {
-    console.error('❌ Register Error:', err);
-    res.status(500).json({ message: 'Something went wrong' });
+    console.error(err);
+    res.status(500).json({ message: 'Server error' });
   }
 };
 
-// ✅ LOGIN
 const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
-    }
+    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
 
-    const token = jwt.sign({ id: user._id }, JWT_SECRET, { expiresIn: '1d' });
+    const token = generateToken(user._id);
 
     res.status(200).json({
       message: 'Login successful',
@@ -68,13 +59,25 @@ const login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        profileComplete: user.profileComplete,
       },
-      token
+      token,
     });
   } catch (err) {
-    console.error('❌ Login Error:', err);
+    console.error(err);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-module.exports = { register, login };
+const me = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const user = await User.findById(userId).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { register, login, me };

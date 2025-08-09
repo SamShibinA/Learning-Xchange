@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,14 +8,66 @@ import {
   Card,
   CardContent,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import { Star } from 'lucide-react';
+import axios from 'axios';
 
-const TutorCard = ({ tutor, onSchedule }) => {
-  const initial = tutor?.name?.[0] || 'T';
+const TutorCard = ({ tutorId, onSchedule }) => {
+  const [tutor, setTutor] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!tutorId) return;
+
+    const fetchTutor = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/tutors/${tutorId}`); // Backend API endpoint
+        setTutor(res.data);
+      } catch (err) {
+        console.error('Error fetching tutor data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTutor();
+  }, [tutorId]);
+
+  if (loading) {
+    return (
+      <Card
+        variant="outlined"
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          boxShadow: 1,
+          backgroundColor: 'white',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: 150,
+        }}
+      >
+        <CircularProgress size={24} />
+      </Card>
+    );
+  }
+
+  if (!tutor) {
+    return (
+      <Card sx={{ p: 3, borderRadius: 3 }}>
+        <Typography variant="body2" color="error">
+          Tutor not found.
+        </Typography>
+      </Card>
+    );
+  }
+
+  const initial = tutor.name?.[0] || 'T';
   const skills = tutor.skills || [];
-
-  const hasRating = tutor.rating && typeof tutor.rating === 'number' && tutor.rating > 0;
+  const hasRating =
+    tutor.rating && typeof tutor.rating === 'number' && tutor.rating > 0;
   const totalRatings = tutor.totalRatings || 0;
 
   return (

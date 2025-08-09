@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Calendar, Clock, Users, BookOpen, Plus } from 'lucide-react';
+import { ArrowLeft, Plus } from 'lucide-react';
 import {
   Box,
   Button,
@@ -16,7 +16,7 @@ import {
   Tooltip,
   Alert,
 } from '@mui/material';
-import { saveSession, generateId } from '../utils/storage';
+import axios from 'axios'; // ✅ For backend API calls
 
 const SessionScheduler = ({ user, onBack }) => {
   const [title, setTitle] = useState('');
@@ -26,13 +26,14 @@ const SessionScheduler = ({ user, onBack }) => {
   const [duration, setDuration] = useState(60);
   const [maxLearners, setMaxLearners] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     const session = {
-      id: generateId(),
       title,
       description,
       tutorId: user.id,
@@ -47,9 +48,16 @@ const SessionScheduler = ({ user, onBack }) => {
       chatMessages: [],
     };
 
-    saveSession(session);
-    setLoading(false);
-    onBack();
+    try {
+      // ✅ Send data to backend API
+      await axios.post('http://localhost:5000/api/sessions', session);
+      onBack(); // Go back after successful save
+    } catch (err) {
+      console.error(err);
+      setError('Failed to schedule the session. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const minDate = new Date();
@@ -67,9 +75,13 @@ const SessionScheduler = ({ user, onBack }) => {
           </Tooltip>
           <Box>
             <Typography variant="h5" fontWeight="bold">Schedule New Session</Typography>
-            <Typography variant="body2" color="text.secondary">Create a learning session for your students</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Create a learning session for your students
+            </Typography>
           </Box>
         </Box>
+
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
@@ -107,7 +119,9 @@ const SessionScheduler = ({ user, onBack }) => {
           </FormControl>
 
           {user.skills && user.skills.length === 0 && (
-            <Alert severity="warning" sx={{ mt: 1 }}>Please add skills to your profile first</Alert>
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              Please add skills to your profile first
+            </Alert>
           )}
 
           <Grid container spacing={2} sx={{ mt: 1 }}>
@@ -151,21 +165,35 @@ const SessionScheduler = ({ user, onBack }) => {
           />
 
           <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Recommended: 5-15 learners for interactive sessions
+            Recommended: 5–15 learners for interactive sessions
           </Typography>
 
           <Box bgcolor="blue.50" borderRadius={2} p={2} border="1px solid" borderColor="blue.100" mt={3}>
-            <Typography variant="subtitle2" color="primary.main" gutterBottom>Session Pricing</Typography>
+            <Typography variant="subtitle2" color="primary.main" gutterBottom>
+              Session Pricing
+            </Typography>
             {user.canCharge ? (
-              <Typography variant="body2">This session will be charged at <strong>${user.hourlyRate}/hour</strong> based on your current rate.</Typography>
+              <Typography variant="body2">
+                This session will be charged at <strong>${user.hourlyRate}/hour</strong>.
+              </Typography>
             ) : (
-              <Typography variant="body2">This will be a <strong>free session</strong>. Once you earn a 4+ star average rating, you'll be able to charge ${user.hourlyRate || 25}/hour for future sessions.</Typography>
+              <Typography variant="body2">
+                This will be a <strong>free session</strong>. Once you earn a 4+ star rating,
+                you'll be able to charge ${user.hourlyRate || 25}/hour for future sessions.
+              </Typography>
             )}
           </Box>
 
           <Grid container spacing={2} mt={3}>
             <Grid item xs={6}>
-              <Button fullWidth variant="outlined" color="secondary" onClick={onBack}>Cancel</Button>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="secondary"
+                onClick={onBack}
+              >
+                Cancel
+              </Button>
             </Grid>
             <Grid item xs={6}>
               <Button
