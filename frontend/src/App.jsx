@@ -96,7 +96,8 @@ function App() {
           Authorization: `Bearer ${token}`,
         },
       });
-      setUser(res.data);
+      setUser(res.data);    
+      // console.log('first',res.data);
     } catch (error) {
       console.error('Failed to fetch current user:', error);
       localStorage.removeItem('token');
@@ -109,6 +110,9 @@ function App() {
   useEffect(() => {
     fetchCurrentUser();
   }, []);
+  useEffect(()=>{
+  console.log(user);
+  },[user])
 
   return (
     <Router>

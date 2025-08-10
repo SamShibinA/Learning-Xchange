@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, Plus } from 'lucide-react';
 import {
   Box,
@@ -16,9 +16,10 @@ import {
   Tooltip,
   Alert,
 } from '@mui/material';
-import axios from 'axios'; // ✅ For backend API calls
+import axios from 'axios';
 
-const SessionScheduler = ({ user, onBack }) => {
+const SessionScheduler = ({ onBack }) => {
+  const [user, setUser] = useState(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [skill, setSkill] = useState('');
@@ -28,15 +29,43 @@ const SessionScheduler = ({ user, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Fetch logged-in user
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setError('You must be logged in to schedule a session.');
+          return;
+        }
+        const res = await axios.get('http://localhost:5000/api/auth/me', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setUser(res.data);
+      } catch (err) {
+        console.error(err);
+        setError('Failed to fetch user info. Please log in again.');
+      }
+    };
+
+    fetchUser();
+  }, []);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
+    if (!user) {
+      setError('User information not loaded.');
+      setLoading(false);
+      return;
+    }
+
     const session = {
       title,
       description,
-      tutorId: user.id,
+      tutorId: user._id, // ✅ Fixed to match MongoDB ObjectId
       tutorName: user.name,
       skill,
       scheduledFor: new Date(scheduledFor),
@@ -49,9 +78,12 @@ const SessionScheduler = ({ user, onBack }) => {
     };
 
     try {
-      // ✅ Send data to backend API
-      await axios.post('http://localhost:5000/api/sessions', session);
-      onBack(); // Go back after successful save
+      await axios.post('http://localhost:5000/api/sessions', session, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      onBack();
     } catch (err) {
       console.error(err);
       setError('Failed to schedule the session. Please try again.');
@@ -63,6 +95,14 @@ const SessionScheduler = ({ user, onBack }) => {
   const minDate = new Date();
   minDate.setHours(minDate.getHours() + 1);
   const minDateString = minDate.toISOString().slice(0, 16);
+
+  if (!user) {
+    return (
+      <Container maxWidth="sm" sx={{ py: 6 }}>
+        <Alert severity="info">Loading user information...</Alert>
+      </Container>
+    );
+  }
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -168,7 +208,13 @@ const SessionScheduler = ({ user, onBack }) => {
             Recommended: 5–15 learners for interactive sessions
           </Typography>
 
-          <Box bgcolor="blue.50" borderRadius={2} p={2} border="1px solid" borderColor="blue.100" mt={3}>
+          <Box sx={{
+            backgroundColor: '#E3F2FD',
+            borderRadius: 2,
+            p: 2,
+            border: '1px solid #90CAF9',
+            mt: 3
+          }}>
             <Typography variant="subtitle2" color="primary.main" gutterBottom>
               Session Pricing
             </Typography>
