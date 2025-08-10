@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, use } from 'react';
 import {
   Box,
   Button,
@@ -35,7 +35,22 @@ const ProfileSetup = ({ user, onComplete, onBack }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  
+  // useEffect(()=>{
+  //   if(error){
+  //     const timer=setTimeout(()=>{
+  //       setError(' ');
+  //     },3000);
+  //     return ()=>clearTimeout(timer);
+  //   }
+  // },[error]);
 
+  // useEffect(()=>{
+  //   const timer=setTimeout(()=>{
+  //      setSuccess(' ');
+  //   },2000)
+  //   return ()=>clearTimeout(timer);
+  // },[success])
   const suggestedSkills = [
     'JavaScript', 'Python', 'React', 'Node.js', 'Data Science',
     'Machine Learning', 'UI/UX Design', 'Digital Marketing',

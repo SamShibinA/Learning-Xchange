@@ -3,10 +3,16 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const JWT_SECRET = process.env.JWT_SECRET || 'yourSecretKey';
 
-const generateToken = (userId) => jwt.sign({ userId }, JWT_SECRET, { expiresIn: '1d' });
+const generateToken = (userId) => jwt.sign({ userId }, JWT_SECRET, { expiresIn: '10m' });
 
 const register = async (req, res) => {
   const { name, email, password, role } = req.body;
+  const emailRegex=/^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if(!emailRegex.test(email)){
+    return res.status(400).json({
+      message:'Invalid Email Format'
+    });
+  }
   try {
     if (await User.findOne({ email })) {
       return res.status(400).json({ message: 'Email already exists' });
@@ -18,7 +24,7 @@ const register = async (req, res) => {
       email,
       password: hashedPassword,
       role,
-      profileComplete: role === 'learner',
+      profileComplete: false,
     });
 
     await newUser.save();
@@ -45,10 +51,10 @@ const login = async (req, res) => {
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!user) return res.status(400).json({ message: 'Invalid Email' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) return res.status(400).json({ message: 'Invalid credentials' });
+    if (!isMatch) return res.status(400).json({ message: 'Invalid Password' });
 
     const token = generateToken(user._id);
 
