@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Card,
   CardContent,
@@ -18,9 +18,7 @@ import {
   DollarSign,
   Play
 } from 'lucide-react';
-import axios from 'axios';
 
-// Session status style mapping
 const statusColors = {
   live: { color: 'error', label: 'LIVE' },
   scheduled: { color: 'primary', label: 'SCHEDULED' },
@@ -28,35 +26,15 @@ const statusColors = {
 };
 
 const SessionCard = ({
-  sessionId,
-  userRole, // "tutor" or "learner"
-  onSessionUpdated, // callback to refresh parent component after enroll/start
+  session,
+  userRole,
+  userId,
+  onEnroll,
+  onJoin,
+  onStartLive,
   detailed = false
 }) => {
-  const [session, setSession] = useState(null);
-  const [userId, setUserId] = useState(null); // will get from backend
-
-  // Fetch session + user data from backend
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // 1. Get current logged-in user from backend
-        const userRes = await axios.get('/api/auth/me'); // requires backend auth route
-        setUserId(userRes.data.id);
-
-        // 2. Get session details from backend
-        const sessionRes = await axios.get(`/api/sessions/${sessionId}`);
-        setSession(sessionRes.data);
-      } catch (err) {
-        console.error('Error fetching data:', err);
-      }
-    };
-    fetchData();
-  }, [sessionId]);
-
-  if (!session) return null; // still loading
-
-  const isEnrolled = Array.isArray(session.enrolledLearners) && session.enrolledLearners.includes(userId);
+  const isEnrolled = session.enrolledLearners.includes(userId);
   const isOwner = userRole === 'tutor' && session.tutorId === userId;
   const canEnroll = !isEnrolled && session.enrolledLearners.length < session.maxLearners;
 
@@ -66,44 +44,19 @@ const SessionCard = ({
   const minutesUntilStart = (sessionDate - now) / 1000 / 60;
   const minutesSinceStart = (now - sessionDate) / 1000 / 60;
 
-  // Allow tutor to start session 10 min before or 15 min after start
+  // Allow tutor to start session 10 minutes before or 15 minutes after start
   const canStart =
     isOwner &&
     session.status === 'scheduled' &&
-    ((minutesUntilStart <= 10 && minutesUntilStart >= 0) ||
-      (minutesSinceStart >= 0 && minutesSinceStart <= 15));
+    ((minutesUntilStart <= 10 && minutesUntilStart >= 0) || (minutesSinceStart >= 0 && minutesSinceStart <= 15));
 
   const status = session.status;
   const statusStyle = statusColors[status] || statusColors.completed;
-
-  // Backend actions
-  const handleEnroll = async () => {
-    try {
-      await axios.post(`/api/sessions/${sessionId}/enroll`);
-      onSessionUpdated?.();
-    } catch (err) {
-      console.error('Error enrolling:', err);
-    }
-  };
-
-  const handleJoin = () => {
-    window.open(session.meetingLink, '_blank'); // meeting link from backend
-  };
-
-  const handleStartLive = async () => {
-    try {
-      await axios.post(`/api/sessions/${sessionId}/start`);
-      onSessionUpdated?.();
-    } catch (err) {
-      console.error('Error starting live session:', err);
-    }
-  };
 
   return (
     <Card sx={{ mb: 3, p: 2 }}>
       <CardContent>
         <Stack spacing={2}>
-          {/* Status + Title */}
           <Box display="flex" justifyContent="space-between" alignItems="flex-start">
             <Box flex={1}>
               <Stack direction="row" spacing={1} alignItems="center" mb={1}>
@@ -118,6 +71,12 @@ const SessionCard = ({
                   color={statusStyle.color}
                   variant="outlined"
                 />
+                {session.isLive && (
+                  <Box display="flex" alignItems="center" gap={1} color="error.main">
+                    <Box width={8} height={8} borderRadius="50%" bgcolor="error.main" sx={{ animation: 'pulse 1s infinite' }} />
+                    <Typography variant="caption">LIVE</Typography>
+                  </Box>
+                )}
               </Stack>
               <Typography variant="h6">{session.title}</Typography>
               {detailed && (
@@ -127,7 +86,6 @@ const SessionCard = ({
               )}
             </Box>
 
-            {/* Price */}
             <Box textAlign="right">
               {session.price > 0 ? (
                 <>
@@ -145,7 +103,6 @@ const SessionCard = ({
             </Box>
           </Box>
 
-          {/* Details */}
           <Stack spacing={1}>
             <Box display="flex" alignItems="center" color="text.secondary">
               <Calendar size={16} style={{ marginRight: 8 }} />
@@ -165,7 +122,6 @@ const SessionCard = ({
             </Box>
           </Stack>
 
-          {/* Tutor info */}
           {!isOwner && (
             <Box display="flex" alignItems="center" gap={1} mt={1}>
               <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
@@ -185,7 +141,7 @@ const SessionCard = ({
                 variant="contained"
                 color="error"
                 startIcon={<Video size={18} />}
-                onClick={handleJoin}
+                onClick={() => onJoin?.(session)}
               >
                 Join Live Session
               </Button>
@@ -199,7 +155,7 @@ const SessionCard = ({
                     variant="contained"
                     color="success"
                     startIcon={<Play size={18} />}
-                    onClick={handleStartLive}
+                    onClick={() => onStartLive?.(session._id)}
                   >
                     Start Session
                   </Button>
@@ -210,7 +166,7 @@ const SessionCard = ({
                     fullWidth
                     variant="contained"
                     color="primary"
-                    onClick={handleEnroll}
+                    onClick={() => onEnroll?.(session._id)}
                   >
                     Enroll Now
                   </Button>

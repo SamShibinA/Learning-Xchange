@@ -8,6 +8,7 @@ import {
   Container,
   Grid,
   IconButton,
+ 
   Paper,
   Tab,
   Tabs,
@@ -17,6 +18,7 @@ import {
 import {
   Video,
   Star,
+  DollarSign,
   BookOpen,
   LogOut,
   Plus,
@@ -160,6 +162,9 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
                       <Typography variant="h4">{user.rating?.toFixed(1) || "0.0"}</Typography>
                       <Star size={24} color="#fbc02d" style={{ marginLeft: 8 }} />
                     </Box>
+                    <Box sx={{ bgcolor: '#fff9c4', p: 1, mt: 2, borderRadius: 1, display: 'inline-block' }}>
+                      <Star size={32} color="#fbc02d" />
+                    </Box>
                   </Paper>
                 </Grid>
                 <Grid item xs={12} md={3}>
@@ -170,6 +175,14 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
                     <Typography variant="h4" sx={{ mt: 1 }}>
                       ${user.canCharge ? user.hourlyRate || 0 : 0}
                     </Typography>
+                         {!user.canCharge && (
+                      <Typography variant="caption" color="warning.main">
+                        Free until 4+ stars
+                      </Typography>
+                    )}
+                    <Box sx={{ bgcolor: '#e8f5e9', p: 1, mt: 2, borderRadius: 1, display: 'inline-block' }}>
+                      <DollarSign size={32} color="#2e7d32" />
+                    </Box>
                   </Paper>
                 </Grid>
               </>
