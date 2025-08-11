@@ -23,5 +23,23 @@ const updateProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+const getTutorById=async(req,res)=>{
+  try{
 
-module.exports = { updateProfile };
+   const tutorId=req.params.tutorId;
+   console.log(tutorId)
+   const tutor=await User.findById(tutorId).select('-password');
+   if(!tutor){
+    return res.status(404).json({message:"Tutor not found"});
+   }
+   if(tutor.role!=='tutor'){
+    return res.status(403).json({message:"You are not a tutor"});
+   }
+   console.log("tutor-for -frontend",tutor);
+   res.status(200).json(tutor);
+  }catch(err){
+    console.log(err);
+  }
+}
+
+module.exports = { updateProfile ,getTutorById};

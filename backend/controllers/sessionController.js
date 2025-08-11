@@ -13,8 +13,9 @@ const createSession = async (req, res) => {
 
 const getSessions=async(req,res)=>{
   try {
-    const session =await Session.find();
-    res.json(session);
+   const session=await Session.find();
+  //  console.log(session);
+   res.json(session);
   }
   catch(error){
     console.log(error);

@@ -79,13 +79,28 @@ const me = async (req, res) => {
   try {
     const userId = req.user.userId;
     const user = await User.findById(userId).select('-password');
-    console.log(user)
+    // console.log(user)
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: 'Server error' });
   }
 };
+const getTutor=async(req,res)=>{
+  try {
+    const {role}=req.query;
+    let filter={};
+    if(role){
+      filter={role:role};
+    }
+    const users=await User.find(filter).select('-password');
+    res.status(200).json(users);
+  }
+  catch(err){
+    console.log(err);
+    res.status(500).json({message:"server error"});
+  }
+}
 
 
-module.exports = { register, login, me };
+module.exports = { register, login, me,getTutor };

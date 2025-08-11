@@ -29,38 +29,38 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
   const [tutors, setTutors] = useState([]);
   const [tabIndex, setTabIndex] = useState(0);
 
-  // Fetch sessions and tutors from backend
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-        // Get all sessions
-        const sessionRes = await axios.get("/api/sessions", config);
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+      const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-        // Filter sessions based on role
-        const userSessions =
-          user.role === "tutor"
-            ? sessionRes.data.filter((s) => s.tutorId === user.id)
-            : sessionRes.data.filter(
-                (s) =>
-                  s.enrolledLearners.includes(user.id) ||
-                  s.status === "scheduled"
-              );
+      // Get all sessions
+      const sessionRes = await axios.get('http://localhost:5000/api/sessions', config);
+      console.log("All Sessions:", sessionRes.data);
+      let userSessions = [];
+      if (user.role === "tutor") {
+        userSessions = sessionRes.data.filter((s) => s.tutorId === user._id);
+      } else {
+        userSessions = sessionRes.data.filter(
+          (s) =>
+            (Array.isArray(s.enrolledLearners) && s.enrolledLearners.includes(user._id)) ||
+            s.status === "scheduled"
+        );
+      } 
+      setSessions(userSessions);
+      console.log("Filtered Sessions:", userSessions);
+    const tutorsRes = await axios.get('http://localhost:5000/api/auth/users?role=tutor', config);
+    console.log("Tutors:", tutorsRes.data);
+    setTutors(tutorsRes.data.filter((t) => t.profileComplete));
+    } catch (err) {
+      console.error("Error fetching sessions:", err);
+    }
+  };
 
-        setSessions(userSessions);
-
-        // Get tutors
-        const tutorsRes = await axios.get("/api/users?role=tutor", config);
-        setTutors(tutorsRes.data.filter((t) => t.profileComplete));
-      } catch (error) {
-        console.error("Error fetching dashboard data", error);
-      }
-    };
-
-    fetchData();
-  }, [user]);
+  fetchData();
+}, [user]);
 
   // Enroll learner in a session
   const enrollInSession = async (sessionId) => {
@@ -206,7 +206,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
             <Grid container spacing={3}>
               {sessions.length > 0 ? (
                 sessions.map((s) => (
-                  <Grid item xs={12} md={6} key={s.id}>
+                  <Grid item xs={12} md={6} key={s._id}>
                     <SessionCard
                       session={s}
                       userRole={user.role}
@@ -236,8 +236,8 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
             {tutors.length > 0 ? (
               <Grid container spacing={3}>
                 {tutors.map((t) => (
-                  <Grid item xs={12} md={4} key={t.id}>
-                    <TutorCard tutor={t} />
+                  <Grid item xs={12} md={4} key={t._id}>
+                    <TutorCard tutorId={t._id} onSchedule={onSchedule} />
                   </Grid>
                 ))}
               </Grid>
