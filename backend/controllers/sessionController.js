@@ -2,6 +2,11 @@ const Session = require("../models/sessionModel");
 
 const createSession = async (req, res) => {
   try {
+ const { title, description, skill, scheduledFor, duration, maxLearners } = req.body;
+
+    if (!title || !description || !skill || !scheduledFor || !duration || !maxLearners) {
+      return res.status(400).json({ message: "Please fill all the fields" });
+    }
     const session = new Session(req.body);
     await session.save();
     res.status(201).json(session);

@@ -27,36 +27,44 @@ const AuthPage = ({ onLogin }) => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-    setSuccess('');
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    try {
-      let res;
-      if (isLogin) {
-        res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
-      } else {
-        res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
-      }
-
-      setSuccess(res.data.message || 'Success');
-      localStorage.setItem('token', res.data.token);  // Save token
-      onLogin(res.data.user); // Pass user to parent
-
-      // Clear inputs after success (optional)
-      setEmail('');
-      setPassword('');
-      setName('');
-      setRole('learner');
-    } catch (err) {
-      const message = err.response?.data?.message || 'An error occurred. Please try again.';
-      setError(message);
-    } finally {
-      setLoading(false);
+  try {
+    let res;
+    if (isLogin) {
+      res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    } else {
+      res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
     }
-  };
+
+    // Show success message
+    setSuccess(res.data.message || 'Success');
+
+    // Hide after 1.5s
+    setTimeout(() => {
+      setSuccess('');
+      onLogin(res.data.user); // Pass user to parent AFTER success message
+    }, 500);
+
+    // Save token
+    localStorage.setItem('token', res.data.token);
+
+    // Clear inputs
+    setEmail('');
+    setPassword('');
+    setName('');
+    setRole('learner');
+  } catch (err) {
+    const message = err.response?.data?.message || 'An error occurred. Please try again.';
+    setError(message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Box

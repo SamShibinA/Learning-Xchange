@@ -28,8 +28,8 @@ const SessionScheduler = ({ onBack }) => {
   const [maxLearners, setMaxLearners] = useState(10);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState(''); // ✅ Success message state
 
-  // Fetch logged-in user
   useEffect(() => {
     const fetchUser = async () => {
       try {
@@ -55,6 +55,7 @@ const SessionScheduler = ({ onBack }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setSuccess('');
 
     if (!user) {
       setError('User information not loaded.');
@@ -65,7 +66,7 @@ const SessionScheduler = ({ onBack }) => {
     const session = {
       title,
       description,
-      tutorId: user._id, // ✅ Fixed to match MongoDB ObjectId
+      tutorId: user._id,
       tutorName: user.name,
       skill,
       scheduledFor: new Date(scheduledFor),
@@ -83,10 +84,14 @@ const SessionScheduler = ({ onBack }) => {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-      onBack();
+      setSuccess('Session scheduled successfully!'); // ✅ Show message
+      setTimeout(() => {
+        setSuccess('');
+        onBack(); 
+      }, 1000);
     } catch (err) {
       console.error(err);
-      setError('Failed to schedule the session. Please try again.');
+      setError(err.response.data.message||'Failed to schedule the session. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -122,6 +127,7 @@ const SessionScheduler = ({ onBack }) => {
         </Box>
 
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>} {/* ✅ Success message */}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <TextField
