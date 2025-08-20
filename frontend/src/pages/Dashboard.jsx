@@ -31,7 +31,6 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
   const [tutors, setTutors] = useState([]);
   const [tabIndex, setTabIndex] = useState(0);
 
-
  useEffect(() => {
   const fetchData = async () => {
     try {
@@ -63,24 +62,41 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
 
   fetchData();
 }, [user]);
-
-  // Enroll learner in a session
-  const enrollInSession = async (sessionId) => {
-    try {
-      const token = localStorage.getItem("token");
-      const config = { headers: { Authorization: `Bearer ${token}` } };
-
-      const res = await axios.post(`/api/sessions/${sessionId}/enroll`, {}, config);
-
-      setSessions((prev) =>
-        prev.map((item) => (item.id === sessionId ? res.data : item))
-      );
-    } catch (error) {
-      console.error("Error enrolling in session", error);
+console.log("user:",user);
+const enrollInSession = async (sessionId) => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("You must be logged in to enroll!");
+      return;
     }
-  };
 
-  // Start live session (for tutor)
+    const config = { headers: { Authorization: `Bearer ${token}` } };
+
+    // 🔗 Call backend enroll API
+    const res = await axios.post(
+      `http://localhost:5000/api/sessions/${sessionId}/enroll`,
+      {},
+      config
+    );
+
+    // ✅ Update state with new session data
+    setSessions((prev) =>
+      prev.map((item) => (item._id === sessionId ? res.data : item))
+    );
+
+    alert("Successfully enrolled in session 🎉");
+  } catch (error) {
+    console.error("Error enrolling in session", error);
+
+    if (error.response) {
+      alert(error.response.data.message || "Failed to enroll");
+    } else {
+      alert("Server error. Try again later.");
+    }
+  }
+};
+
   const startLiveSession = async (sessionId) => {
     try {
       const token = localStorage.getItem("token");
@@ -223,8 +239,9 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
                     <SessionCard
                       session={s}
                       userRole={user.role}
-                      userId={user.id}
+                      userId={user._id}
                       onEnroll={enrollInSession}
+                      isEnrolled={Array.isArray(s.enrolledLearners) && s.enrolledLearners.includes(user._id)}
                       onStartLive={startLiveSession}
                       onJoin={onJoinCall}
                       detailed
