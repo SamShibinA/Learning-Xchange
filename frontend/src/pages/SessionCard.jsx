@@ -1,4 +1,221 @@
-import React from 'react';
+// import React from "react";
+// import {
+//   Card,
+//   CardContent,
+//   Typography,
+//   Box,
+//   Chip,
+//   Button,
+//   Divider,
+// } from "@mui/material";
+// import {
+//   Video,
+//   Star,
+//   DollarSign,
+//   BookOpen,
+//   LogOut,
+//   Play,
+// } from "lucide-react";
+
+// function SessionCard({
+//   session,
+//   userId,
+//   userRole,
+//   isEnrolled,
+//   onEnroll,
+//   onUnenroll,
+//   onStartLive,
+// }) {
+//   console.log(userId)
+//   const {
+//     _id,
+//     title,
+//     skill,
+//     scheduledFor,
+//     duration,
+//     maxLearners,
+//     enrolledLearners = [],
+//     tutorId,
+//     tutorName,
+//     price,
+//     status,
+//   } = session;
+//   console.log("tutor:",session,tutorId,tutorName)
+//   const isOwner = userId === tutorId;
+//   const enrolledCount = enrolledLearners.length;
+//   const canEnroll = enrolledCount < maxLearners;
+//   const canStart = status === "scheduled" && enrolledCount > 0;
+
+//   return (
+//     <Card
+//       variant="outlined"
+//       sx={{
+//         borderRadius: 4,
+//         boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+//         mb: 3,
+//         background: "#fff",
+//         transition: "all 0.25s ease",
+//         "&:hover": {
+//           boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+//           transform: "translateY(-2px)",
+//         },
+//       }}
+//     >
+//       <CardContent sx={{ p: 3 }}>
+//         {/* Title */}
+//         <Typography variant="h6" fontWeight="600" gutterBottom>
+//           {title}
+//         </Typography>
+
+//         {/* Tutor */}
+//         <Box display="flex" alignItems="center" gap={1} mb={1}>
+//           <Star size={18} color="#f5b400" />
+//           <Typography variant="body2" color="text.secondary">
+//             {tutorName || "Unknown Tutor"}
+//           </Typography>
+//         </Box>
+
+//         {/* Skill */}
+//         <Box display="flex" alignItems="center" gap={1} mb={1}>
+//           <BookOpen size={18} color="#4f46e5" />
+//           <Typography variant="body2" color="text.secondary">
+//             {skill}
+//           </Typography>
+//         </Box>
+
+//         {/* Schedule */}
+//         <Box display="flex" alignItems="center" gap={1} mb={1}>
+//           <Video size={18} color="#0284c7" />
+//           <Typography variant="body2" color="text.secondary">
+//             {new Date(scheduledFor).toLocaleString()}
+//           </Typography>
+//         </Box>
+
+//         {/* Duration */}
+//         <Typography variant="body2" color="text.secondary" mb={2}>
+//           ⏱ {duration} mins
+//         </Typography>
+
+//         {/* Price */}
+//         {price && (
+//           <Box display="flex" alignItems="center" gap={1} mb={2}>
+//             <DollarSign size={18} color="#16a34a" />
+//             <Typography variant="body2" fontWeight="500" color="text.primary">
+//               ₹{price}
+//             </Typography>
+//           </Box>
+//         )}
+
+//         {/* Status + Capacity */}
+//         <Box display="flex" gap={1} mb={2}>
+//           <Chip
+//             label={`${enrolledCount}/${maxLearners} learners`}
+//             size="small"
+//             sx={{
+//               fontWeight: 500,
+//               backgroundColor: canEnroll ? "#e0f2fe" : "#f3f4f6",
+//               color: canEnroll ? "#0284c7" : "#6b7280",
+//             }}
+//           />
+//           <Chip
+//             label={status.toUpperCase()}
+//             size="small"
+//             sx={{
+//               fontWeight: 600,
+//               backgroundColor:
+//                 status === "live"
+//                   ? "#dcfce7"
+//                   : status === "completed"
+//                   ? "#f3f4f6"
+//                   : "#fef9c3",
+//               color:
+//                 status === "live"
+//                   ? "#16a34a"
+//                   : status === "completed"
+//                   ? "#6b7280"
+//                   : "#ca8a04",
+//             }}
+//           />
+//         </Box>
+
+//         <Divider sx={{ my: 2 }} />
+
+//         {/* Action Buttons */}
+//         <Box mt={1} display="flex" flexDirection="column" gap={1}>
+//           {status === "scheduled" && (
+//             <>
+//               {/* Tutor can start session */}
+//               {canStart && isOwner && (
+//                 <Button
+//                   variant="contained"
+//                   color="success"
+//                   startIcon={<Play size={18} />}
+//                   onClick={() => onStartLive?.(_id)}
+//                   sx={{ borderRadius: 2, py: 1 }}
+//                 >
+//                   Start Session
+//                 </Button>
+//               )}
+
+//               {/* Learner can enroll */}
+//               {userRole === "learner" && !isEnrolled && canEnroll && (
+//                 <Button
+//                   variant="contained"
+//                   color="primary"
+//                   onClick={() => onEnroll?.(_id)}
+//                   sx={{ borderRadius: 2, py: 1 }}
+//                 >
+//                   Enroll Now
+//                 </Button>
+//               )}
+
+//               {/* Learner already enrolled */}
+//               {userRole === "learner" && isEnrolled && (
+//                 <Button
+//                   variant="outlined"
+//                   color="error"
+//                   startIcon={<LogOut size={18} />}
+//                   onClick={() => onUnenroll?.(_id)}
+//                   sx={{ borderRadius: 2, py: 1 }}
+//                 >
+//                   Unenroll
+//                 </Button>
+//               )}
+
+//               {/* Session full */}
+//               {!canEnroll && !isEnrolled && userRole === "learner" && (
+//                 <Chip
+//                   label="Session Full"
+//                   sx={{
+//                     fontWeight: 500,
+//                     backgroundColor: "#f3f4f6",
+//                     color: "#6b7280",
+//                   }}
+//                 />
+//               )}
+//             </>
+//           )}
+
+//           {/* Live session button */}
+//           {status === "live" && (
+//             <Button
+//               variant="contained"
+//               color="success"
+//               startIcon={<Video size={18} />}
+//               onClick={() => window.open(`/session/${_id}`, "_blank")}
+//               sx={{ borderRadius: 2, py: 1 }}
+//             >
+//               Join Live
+//             </Button>
+//           )}
+//         </Box>
+//       </CardContent>
+//     </Card>
+//   );
+// }
+
+// export default SessionCard;
+import React from "react";
 import {
   Card,
   CardContent,
@@ -6,190 +223,232 @@ import {
   Box,
   Chip,
   Button,
-  Avatar,
-  Stack
-} from '@mui/material';
+  Divider,
+} from "@mui/material";
 import {
-  Calendar,
-  Clock,
-  Users,
   Video,
   Star,
   DollarSign,
-  Play
-} from 'lucide-react';
+  BookOpen,
+  LogOut,
+  Play,
+  CheckCircle,
+} from "lucide-react";
 
-const statusColors = {
-  live: { color: 'error', label: 'LIVE' },
-  scheduled: { color: 'primary', label: 'SCHEDULED' },
-  completed: { color: 'default', label: 'COMPLETED' }
-};
-
-const SessionCard = ({
+function SessionCard({
   session,
-  userRole,
   userId,
+  userRole,
+  isEnrolled,
   onEnroll,
-  onJoin,
+  onUnenroll,
   onStartLive,
-  detailed = false
-}) => {
-  const isEnrolled = session.enrolledLearners.includes(userId);
-  const isOwner = userRole === 'tutor' && session.tutorId === userId;
-  const canEnroll = !isEnrolled && session.enrolledLearners.length < session.maxLearners;
-
-  const sessionDate = new Date(session.scheduledFor);
-  const now = new Date();
-
-  const minutesUntilStart = (sessionDate - now) / 1000 / 60;
-  const minutesSinceStart = (now - sessionDate) / 1000 / 60;
-
-  // Allow tutor to start session 10 minutes before or 15 minutes after start
-  const canStart =
-    isOwner &&
-    session.status === 'scheduled' &&
-    ((minutesUntilStart <= 10 && minutesUntilStart >= 0) || (minutesSinceStart >= 0 && minutesSinceStart <= 15));
-
-  const status = session.status;
-  const statusStyle = statusColors[status] || statusColors.completed;
+}) {
+  const {
+    _id,
+    title,
+    skill,
+    scheduledFor,
+    duration,
+    maxLearners,
+    enrolledLearners = [],
+    tutorId,
+    tutorName,
+    price,
+    status,
+  } = session;
+  
+  const isOwner = userId === tutorId;
+  const enrolledCount = enrolledLearners.length;
+  const canEnroll = enrolledCount < maxLearners;
+  const canStart = status === "scheduled" && enrolledCount > 0;
 
   return (
-    <Card sx={{ mb: 3, p: 2 }}>
-      <CardContent>
-        <Stack spacing={2}>
-          <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-            <Box flex={1}>
-              <Stack direction="row" spacing={1} alignItems="center" mb={1}>
-                <Chip
-                  size="small"
-                  label={
-                    <>
-                      {status === 'live' && <Video size={14} style={{ marginRight: 4 }} />}
-                      {statusStyle.label}
-                    </>
-                  }
-                  color={statusStyle.color}
-                  variant="outlined"
-                />
-                {session.isLive && (
-                  <Box display="flex" alignItems="center" gap={1} color="error.main">
-                    <Box width={8} height={8} borderRadius="50%" bgcolor="error.main" sx={{ animation: 'pulse 1s infinite' }} />
-                    <Typography variant="caption">LIVE</Typography>
-                  </Box>
-                )}
-              </Stack>
-              <Typography variant="h6">{session.title}</Typography>
-              {detailed && (
-                <Typography variant="body2" color="text.secondary">
-                  {session.description}
-                </Typography>
-              )}
-            </Box>
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: 4,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+        mb: 3,
+        background: "#fff",
+        transition: "all 0.25s ease",
+        "&:hover": {
+          boxShadow: "0 6px 20px rgba(0,0,0,0.12)",
+          transform: "translateY(-2px)",
+        },
+      }}
+    >
+      <CardContent sx={{ p: 3 }}>
+        {/* Title */}
+        <Typography variant="h6" fontWeight="600" gutterBottom>
+          {title}
+        </Typography>
 
-            <Box textAlign="right">
-              {session.price > 0 ? (
-                <>
-                  <Box display="flex" justifyContent="flex-end" alignItems="center" color="success.main" fontWeight="bold">
-                    <DollarSign size={18} style={{ marginRight: 4 }} />
-                    {session.price}
-                  </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    per hour
-                  </Typography>
-                </>
-              ) : (
-                <Chip label="FREE" size="small" color="success" variant="outlined" />
-              )}
-            </Box>
+        {/* Tutor */}
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <Star size={18} color="#f5b400" />
+          <Typography variant="body2" color="text.secondary">
+            {tutorName || "Unknown Tutor"}
+          </Typography>
+        </Box>
+
+        {/* Skill */}
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <BookOpen size={18} color="#4f46e5" />
+          <Typography variant="body2" color="text.secondary">
+            {skill}
+          </Typography>
+        </Box>
+
+        {/* Schedule */}
+        <Box display="flex" alignItems="center" gap={1} mb={1}>
+          <Video size={18} color="#0284c7" />
+          <Typography variant="body2" color="text.secondary">
+            {new Date(scheduledFor).toLocaleString()}
+          </Typography>
+        </Box>
+
+        {/* Duration */}
+        <Typography variant="body2" color="text.secondary" mb={2}>
+          ⏱ {duration} mins
+        </Typography>
+
+        {/* Price */}
+        {price && (
+          <Box display="flex" alignItems="center" gap={1} mb={2}>
+            <DollarSign size={18} color="#16a34a" />
+            <Typography variant="body2" fontWeight="500" color="text.primary">
+              ₹{price}
+            </Typography>
           </Box>
+        )}
 
-          <Stack spacing={1}>
-            <Box display="flex" alignItems="center" color="text.secondary">
-              <Calendar size={16} style={{ marginRight: 8 }} />
-              {sessionDate.toLocaleDateString()} at {sessionDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </Box>
-            <Box display="flex" alignItems="center" color="text.secondary">
-              <Clock size={16} style={{ marginRight: 8 }} />
-              {session.duration} minutes
-            </Box>
-            <Box display="flex" alignItems="center" color="text.secondary">
-              <Users size={16} style={{ marginRight: 8 }} />
-              {session.enrolledLearners.length} / {session.maxLearners} enrolled
-            </Box>
-            <Box display="flex" alignItems="center" color="text.secondary">
-              <Star size={16} style={{ marginRight: 8 }} />
-              {session.skill}
-            </Box>
-          </Stack>
+        {/* Status + Capacity */}
+        <Box display="flex" gap={1} mb={2}>
+          <Chip
+            label={`${enrolledCount}/${maxLearners} learners`}
+            size="small"
+            sx={{
+              fontWeight: 500,
+              backgroundColor: canEnroll ? "#e0f2fe" : "#f3f4f6",
+              color: canEnroll ? "#0284c7" : "#6b7280",
+            }}
+          />
+          <Chip
+            label={status.toUpperCase()}
+            size="small"
+            sx={{
+              fontWeight: 600,
+              backgroundColor:
+                status === "live"
+                  ? "#dcfce7"
+                  : status === "completed"
+                  ? "#f3f4f6"
+                  : "#fef9c3",
+              color:
+                status === "live"
+                  ? "#16a34a"
+                  : status === "completed"
+                  ? "#6b7280"
+                  : "#ca8a04",
+            }}
+          />
+        </Box>
 
-          {!isOwner && (
-            <Box display="flex" alignItems="center" gap={1} mt={1}>
-              <Avatar sx={{ bgcolor: 'primary.main', width: 32, height: 32 }}>
-                {session.tutorName?.charAt(0).toUpperCase()}
-              </Avatar>
-              <Typography variant="body2" fontWeight={500}>
-                {session.tutorName}
-              </Typography>
-            </Box>
-          )}
+        <Divider sx={{ my: 2 }} />
 
-          {/* Action Buttons */}
-          <Box display="flex" gap={2} flexWrap="wrap" mt={2}>
-            {status === 'live' && (isEnrolled || isOwner) && (
-              <Button
-                fullWidth
-                variant="contained"
-                color="error"
-                startIcon={<Video size={18} />}
-                onClick={() => onJoin?.(session)}
-              >
-                Join Live Session
-              </Button>
-            )}
+        {/* Action Buttons */}
+        <Box mt={1} display="flex" flexDirection="column" gap={1}>
+          {status === "scheduled" && (
+            <>
+              {/* Tutor can start session */}
+              {canStart && isOwner && (
+                <Button
+                  variant="contained"
+                  color="success"
+                  startIcon={<Play size={18} />}
+                  onClick={() => onStartLive?.(_id)}
+                  sx={{ borderRadius: 2, py: 1 }}
+                >
+                  Start Session
+                </Button>
+              )}
 
-            {status === 'scheduled' && (
-              <>
-                {canStart && isOwner && (
+              {/* Learner already enrolled → show "Join Session" + Enrolled badge */}
+              {userRole === "learner" && isEnrolled && (
+                <>
                   <Button
-                    fullWidth
                     variant="contained"
                     color="success"
-                    startIcon={<Play size={18} />}
-                    onClick={() => onStartLive?.(session.id)}
+                    startIcon={<Video size={18} />}
+                    onClick={() => window.open(`/session/${_id}`, "_blank")}
+                    sx={{ borderRadius: 2, py: 1 }}
                   >
-                    Start Session
+                    Join Session
                   </Button>
-                )}
 
-                {userRole === 'learner' && !isEnrolled && canEnroll && (
                   <Button
-                    fullWidth
-                    variant="contained"
-                    color="primary"
-                    onClick={() => onEnroll?.(session.id)}
+                    variant="outlined"
+                    startIcon={<CheckCircle size={18} color="#16a34a" />}
+                    sx={{
+                      borderRadius: 2,
+                      py: 1,
+                      borderColor: "#16a34a",
+                      color: "#16a34a",
+                      fontWeight: 600,
+                      cursor: "default",
+                    }}
+                    disabled
                   >
-                    Enroll Now
+                    Enrolled
                   </Button>
-                )}
+                </>
+              )}
 
-                {userRole === 'learner' && isEnrolled && (
-                  <Chip label="✓ Enrolled" color="success" variant="outlined" />
-                )}
+              {/* Learner can enroll */}
+              {userRole === "learner" && !isEnrolled && canEnroll && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => onEnroll?.(_id)}
+                  sx={{ borderRadius: 2, py: 1 }}
+                >
+                  Enroll Now
+                </Button>
+              )}
 
-                {!canEnroll && !isEnrolled && userRole === 'learner' && (
-                  <Chip label="Session Full" color="default" variant="outlined" />
-                )}
-              </>
-            )}
+              {/* Session full */}
+              {!canEnroll && !isEnrolled && userRole === "learner" && (
+                <Chip
+                  label="Session Full"
+                  sx={{
+                    fontWeight: 500,
+                    backgroundColor: "#f3f4f6",
+                    color: "#6b7280",
+                  }}
+                />
+              )}
+            </>
+          )}
 
-            {status === 'completed' && (
-              <Chip label="Completed" color="default" variant="outlined" />
-            )}
-          </Box>
-        </Stack>
+          {/* Live session button (both tutor & learner) */}
+          {status === "live" && (
+            <Button
+              variant="contained"
+              color="success"
+              startIcon={<Video size={18} />}
+              onClick={() => window.open(`/session/${_id}`, "_blank")}
+              sx={{ borderRadius: 2, py: 1 }}
+            >
+              Join Live
+            </Button>
+          )}
+        </Box>
       </CardContent>
     </Card>
   );
-};
+}
 
 export default SessionCard;
+
+

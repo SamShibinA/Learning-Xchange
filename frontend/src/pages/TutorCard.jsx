@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Typography,
@@ -8,14 +8,68 @@ import {
   Card,
   CardContent,
   Divider,
+  CircularProgress,
 } from '@mui/material';
 import { Star } from 'lucide-react';
+import axios from 'axios';
 
-const TutorCard = ({ tutor, onSchedule }) => {
-  const initial = tutor?.name?.[0] || 'T';
+const TutorCard = ({ tutorId, onSchedule }) => {
+  const [tutor, setTutor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const token=localStorage.getItem('token');
+  useEffect(() => {
+    if (!tutorId) return;
+
+    const fetchTutor = async () => {
+      try {
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+        const res = await axios.get(`http://localhost:5000/api/profile/${tutorId}`,config); // Backend API endpoint
+        console.log(res.data);
+        setTutor(res.data);
+      } catch (err) {
+        console.error('Error fetching tutor data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTutor();
+  }, [tutorId]);
+
+  if (loading) {
+    return (
+      <Card
+        variant="outlined"
+        sx={{
+          p: 3,
+          borderRadius: 3,
+          boxShadow: 1,
+          backgroundColor: 'white',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: 150,
+        }}
+      >
+        <CircularProgress size={24} />
+      </Card>
+    );
+  }
+
+  if (!tutor) {
+    return (
+      <Card sx={{ p: 3, borderRadius: 3 }}>
+        <Typography variant="body2" color="error">
+          Tutor not found.
+        </Typography>
+      </Card>
+    );
+  }
+
+  const initial = tutor.name?.[0] || 'T';
   const skills = tutor.skills || [];
-
-  const hasRating = tutor.rating && typeof tutor.rating === 'number' && tutor.rating > 0;
+  const hasRating =
+    tutor.rating && typeof tutor.rating === 'number' && tutor.rating > 0;
   const totalRatings = tutor.totalRatings || 0;
 
   return (
@@ -66,9 +120,10 @@ const TutorCard = ({ tutor, onSchedule }) => {
           Skills
         </Typography>
         <Box display="flex" flexWrap="wrap" gap={1}>
-          {skills.slice(0, 4).map((skill) => (
-            <Chip key={skill} label={skill} size="small" color="primary" />
-          ))}
+         {skills.slice(0, 4).map((skill, idx) => (
+  <Chip key={`${skill}-${idx}`} label={skill} size="small" color="primary" />
+))}
+
           {skills.length > 4 && (
             <Typography variant="caption" color="text.secondary">
               +{skills.length - 4} more
@@ -108,3 +163,139 @@ const TutorCard = ({ tutor, onSchedule }) => {
 };
 
 export default TutorCard;
+// import React, { useEffect, useState } from 'react';
+// import {
+//   Box,
+//   Typography,
+//   Avatar,
+//   Chip,
+//   Button,
+//   Card,
+//   Divider,
+//   CircularProgress,
+// } from '@mui/material';
+// import { Star } from 'lucide-react';
+// import axios from 'axios';
+
+// const TutorCard = ({ tutorId, onSchedule }) => {
+//   console.log("tc",tutorId);
+//   const [tutor, setTutor] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // ✅ Get token from localStorage (or from context if you use AuthContext)
+//   const token = localStorage.getItem('token');
+
+//   useEffect(() => {
+//     if (!tutorId) return;
+
+//     const fetchTutor = async () => {
+//       try {
+//         const config = token
+//           ? { headers: { Authorization: `Bearer ${token}` } }
+//           : {};
+
+//         const res = await axios.get(
+//           `http://localhost:5000/api/profile/${tutorId}`,
+//           config
+//         );
+//         console.log("tc:data:",res.data);
+//         setTutor(res.data);
+//       } catch (err) {
+//         console.error('Error fetching tutor data:', err);
+//       } finally {
+//         setLoading(true);
+//       }
+//     };
+
+//     fetchTutor();
+//   }, [tutorId, token]);
+
+//   if (loading) {
+//     return (
+//       <Card sx={{ p: 3, borderRadius: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', height: 150 }}>
+//         <CircularProgress size={24} />
+//       </Card>
+//     );
+//   }
+
+//   if (!tutor) {
+//     return (
+//       <Card sx={{ p: 3, borderRadius: 3 }}>
+//         <Typography variant="body2" color="error">
+//           Tutor not found.
+//         </Typography>
+//       </Card>
+//     );
+//   }
+
+//   const initial = tutor.name?.[0] || 'T';
+//   const skills = tutor.skills || [];
+//   const hasRating = tutor.rating && tutor.rating > 0;
+
+//   return (
+//     <Card sx={{ p: 3, borderRadius: 3, boxShadow: 1, '&:hover': { boxShadow: 4 } }}>
+//       <Box display="flex" gap={2} alignItems="flex-start" mb={2}>
+//         <Avatar sx={{ bgcolor: 'primary.main', width: 48, height: 48 }}>
+//           {initial}
+//         </Avatar>
+
+//         <Box flex={1}>
+//           <Typography variant="h6">{tutor.name}</Typography>
+//           {hasRating ? (
+//             <Box display="flex" alignItems="center" gap={1}>
+//               <Star size={16} color="#facc15" fill="#facc15" />
+//               <Typography variant="body2">{tutor.rating.toFixed(1)}</Typography>
+//               <Typography variant="body2" color="text.secondary">
+//                 ({tutor.totalRatings || 0} reviews)
+//               </Typography>
+//             </Box>
+//           ) : (
+//             <Typography variant="body2" color="text.secondary">
+//               New tutor
+//             </Typography>
+//           )}
+//         </Box>
+//       </Box>
+
+//       <Typography variant="body2" color="text.secondary" mb={2}>
+//         {tutor.bio || 'No bio available.'}
+//       </Typography>
+
+//       <Box mb={2}>
+//         <Typography variant="subtitle2">Skills</Typography>
+//         <Box display="flex" flexWrap="wrap" gap={1}>
+//           {skills.slice(0, 4).map((skill, idx) => (
+//             <Chip key={`${skill}-${idx}`} label={skill} size="small" color="primary" />
+//           ))}
+//           {skills.length > 4 && (
+//             <Typography variant="caption" color="text.secondary">
+//               +{skills.length - 4} more
+//             </Typography>
+//           )}
+//         </Box>
+
+//       </Box>
+
+//       <Divider sx={{ my: 2 }} />
+
+//       <Box display="flex" justifyContent="space-between" alignItems="center">
+//         <Typography variant="body2">
+//           {tutor.canCharge ? (
+//             <strong>${tutor.hourlyRate}/hr</strong>
+//           ) : (
+//             <span style={{ color: '#16a34a', fontWeight: 600 }}>Free sessions</span>
+//           )}
+//         </Typography>
+//         <Button
+//           variant="contained"
+//           size="small"
+//           onClick={() => onSchedule?.(tutor)}
+//         >
+//           View Profile
+//         </Button>
+//       </Box>
+//     </Card>
+//   );
+// };
+
+// export default TutorCard;

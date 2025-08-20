@@ -14,7 +14,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { BookOpen, GraduationCap } from 'lucide-react';
-import { getAllUsers, saveUser, generateId } from '../utils/storage';
+import axios from 'axios';
 
 const AuthPage = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
@@ -25,55 +25,46 @@ const AuthPage = ({ onLogin }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+const handleSubmit = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
-    try {
-      const users = getAllUsers();
-
-      if (isLogin) {
-        const user = users.find((u) => u.email === email && u.password === password);
-        if (!user) {
-          setError('Invalid email or password');
-          return;
-        }
-        onLogin(user);
-      } else {
-        const existingUser = users.find((u) => u.email === email);
-        if (existingUser) {
-          setError('Email already registered');
-          return;
-        }
-
-        const newUser = {
-          id: generateId(),
-          email,
-          password,
-          name,
-          role,
-          profileComplete: role === 'learner',
-          sessionsAttended: role === 'learner' ? 0 : undefined,
-          skills: role === 'tutor' ? [] : undefined,
-          bio: role === 'tutor' ? '' : undefined,
-          hourlyRate: role === 'tutor' ? 0 : undefined,
-          rating: role === 'tutor' ? 0 : undefined,
-          totalRatings: role === 'tutor' ? 0 : undefined,
-          canCharge: false,
-          interests: role === 'learner' ? [] : undefined,
-        };
-
-        saveUser(newUser);
-        onLogin(newUser);
-      }
-    } catch {
-      setError('An error occurred. Please try again.');
-    } finally {
-      setLoading(false);
+  try {
+    let res;
+    if (isLogin) {
+      res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+    } else {
+      res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
     }
-  };
+
+    // Show success message
+    setSuccess(res.data.message || 'Success');
+
+    // Hide after 1.5s
+    setTimeout(() => {
+      setSuccess('');
+      onLogin(res.data.user); // Pass user to parent AFTER success message
+    }, 500);
+
+    // Save token
+    localStorage.setItem('token', res.data.token);
+
+    // Clear inputs
+    setEmail('');
+    setPassword('');
+    setName('');
+    setRole('learner');
+  } catch (err) {
+    const message = err.response?.data?.message || 'An error occurred. Please try again.';
+    setError(message);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Box
@@ -82,16 +73,11 @@ const AuthPage = ({ onLogin }) => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        bgcolor: '#ffffff', // White background on full screen
+        bgcolor: '#fff',
         px: 2,
       }}
     >
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: 400,
-        }}
-      >
+      <Box sx={{ width: '100%', maxWidth: 400 }}>
         <Box textAlign="center" mb={4}>
           <Avatar sx={{ bgcolor: 'primary.main', width: 64, height: 64, mx: 'auto', mb: 2 }}>
             <BookOpen size={32} color="#fff" />
@@ -124,7 +110,6 @@ const AuthPage = ({ onLogin }) => {
                   fullWidth
                   margin="normal"
                   required
-                  sx={{ input: { backgroundColor: '#fff !important' } }}
                 />
                 <Box mb={2}>
                   <Typography variant="subtitle2" mb={1}>
@@ -136,51 +121,19 @@ const AuthPage = ({ onLogin }) => {
                     onChange={(e, newRole) => newRole && setRole(newRole)}
                     fullWidth
                   >
-                    <ToggleButton
-                      value="learner"
-                      sx={{
-                        flex: 1,
-                        '&:hover': {
-                          backgroundColor: '#cce0ff', // light blue (like text selection)
-                        },
-                        '&.Mui-selected': {
-                          backgroundColor: '#cce0ff', // selected state
-                          color: '#000',
-                          '&:hover': {
-                            backgroundColor: '#b3d4ff', // slightly darker blue on hover while selected
-                          },
-                        },
-                      }}
-                    >
+                    <ToggleButton value="learner" sx={{ flex: 1 }}>
                       <Box display="flex" flexDirection="column" alignItems="center">
                         <BookOpen size={20} />
                         Learner
                       </Box>
                     </ToggleButton>
-
-                    <ToggleButton
-                      value="tutor"
-                      sx={{
-                        flex: 1,
-                        '&:hover': {
-                          backgroundColor: '#cce0ff',
-                        },
-                        '&.Mui-selected': {
-                          backgroundColor: '#cce0ff',
-                          color: '#000',
-                          '&:hover': {
-                            backgroundColor: '#b3d4ff',
-                          },
-                        },
-                      }}
-                    >
+                    <ToggleButton value="tutor" sx={{ flex: 1 }}>
                       <Box display="flex" flexDirection="column" alignItems="center">
                         <GraduationCap size={20} />
                         Tutor
                       </Box>
                     </ToggleButton>
                   </ToggleButtonGroup>
-
                 </Box>
               </>
             )}
@@ -193,7 +146,6 @@ const AuthPage = ({ onLogin }) => {
               fullWidth
               margin="normal"
               required
-              sx={{ input: { backgroundColor: '#fff !important' } }}
             />
 
             <TextField
@@ -204,7 +156,6 @@ const AuthPage = ({ onLogin }) => {
               fullWidth
               margin="normal"
               required
-              sx={{ input: { backgroundColor: '#fff !important' } }}
               InputProps={{
                 endAdornment: (
                   <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
@@ -217,6 +168,11 @@ const AuthPage = ({ onLogin }) => {
             {error && (
               <Alert severity="error" sx={{ mt: 2 }}>
                 {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                {success}
               </Alert>
             )}
 
@@ -235,7 +191,14 @@ const AuthPage = ({ onLogin }) => {
           <Box mt={3} textAlign="center">
             <Typography variant="body2">
               {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
-              <Button size="small" onClick={() => setIsLogin(!isLogin)}>
+              <Button
+                size="small"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setError('');
+                  setSuccess('');
+                }}
+              >
                 {isLogin ? 'Sign Up' : 'Sign In'}
               </Button>
             </Typography>
