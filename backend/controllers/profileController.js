@@ -27,7 +27,7 @@ const getTutorById=async(req,res)=>{
   try{
 
    const tutorId=req.params.tutorId;
-   console.log(tutorId)
+  //  console.log(tutorId)
    const tutor=await User.findById(tutorId).select('-password');
    if(!tutor){
     return res.status(404).json({message:"Tutor not found"});
@@ -35,7 +35,7 @@ const getTutorById=async(req,res)=>{
    if(tutor.role!=='tutor'){
     return res.status(403).json({message:"You are not a tutor"});
    }
-   console.log("tutor-for -frontend",tutor);
+  //  console.log("tutor-for -frontend",tutor);
    res.status(200).json(tutor);
   }catch(err){
     console.log(err);
