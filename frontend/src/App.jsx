@@ -1,11 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import AuthPage from './pages/AuthPage';
-import Dashboard from './pages/Dashboard';
-import ProfileSetup from './pages/ProfileSetup';
-import SessionScheduler from './pages/SessionScheduler';
-import VideoCall from './pages/VideoCall';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useNavigate,
+  useParams,
+  useLocation,
+} from "react-router-dom";
+import AuthPage from "./pages/AuthPage";
+import Dashboard from "./pages/Dashboard";
+import ProfileSetup from "./pages/ProfileSetup";
+import SessionScheduler from "./pages/SessionScheduler";
+import VideoCall from "./pages/VideoCall";
+
+// ✅ Wrapper for session route
+function VideoCallWrapper({ user, onLeave }) {
+  const { id } = useParams();
+  const location = useLocation();
+
+  // If session is passed via state use that, otherwise create placeholder
+  const session = location.state?.session || { id, title: "Live Session" };
+
+  return (
+    <VideoCall
+      session={session}
+      user={user}
+      onLeave={onLeave}
+      backendUrl="http://localhost:5000"
+    />
+  );
+}
 
 function AppRoutes({ user, setUser, loading }) {
   const navigate = useNavigate();
@@ -13,21 +39,21 @@ function AppRoutes({ user, setUser, loading }) {
   const handleLogin = (userData) => {
     setUser(userData);
     if (!userData.profileComplete) {
-      navigate('/profile-setup');
+      navigate("/profile-setup");
     } else {
-      navigate('/dashboard');
+      navigate("/dashboard");
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    localStorage.removeItem("token");
     setUser(null);
-    navigate('/auth');
+    navigate("/auth");
   };
 
   const handleProfileComplete = (updatedUser) => {
     setUser(updatedUser);
-    navigate('/dashboard');
+    navigate("/dashboard");
   };
 
   if (loading) return <div>Loading...</div>;
@@ -37,10 +63,19 @@ function AppRoutes({ user, setUser, loading }) {
       <Route
         path="/"
         element={
-          !user ? <Navigate to="/auth" /> : !user.profileComplete ? <Navigate to="/profile-setup" /> : <Navigate to="/dashboard" />
+          !user ? (
+            <Navigate to="/auth" />
+          ) : !user.profileComplete ? (
+            <Navigate to="/profile-setup" />
+          ) : (
+            <Navigate to="/dashboard" />
+          )
         }
       />
-      <Route path="/auth" element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/" />} />
+      <Route
+        path="/auth"
+        element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/" />}
+      />
       <Route
         path="/dashboard"
         element={
@@ -51,9 +86,11 @@ function AppRoutes({ user, setUser, loading }) {
           ) : (
             <Dashboard
               user={user}
-              onJoinCall={(session) => navigate('/video-call', { state: { session } })}
-              onSchedule={() => navigate('/scheduler')}
-              onProfileEdit={() => navigate('/profile-setup')}
+              onJoinCall={(session) =>
+                navigate(`/session/${session.id}`, { state: { session } })
+              }
+              onSchedule={() => navigate("/scheduler")}
+              onProfileEdit={() => navigate("/profile-setup")}
               onLogout={handleLogout}
             />
           )
@@ -67,12 +104,38 @@ function AppRoutes({ user, setUser, loading }) {
           ) : user.profileComplete ? (
             <Navigate to="/dashboard" />
           ) : (
-            <ProfileSetup user={user} onComplete={handleProfileComplete} onBack={() => navigate('/dashboard')} />
+            <ProfileSetup
+              user={user}
+              onComplete={handleProfileComplete}
+              onBack={() => navigate("/dashboard")}
+            />
           )
         }
       />
-      <Route path="/scheduler" element={user ? <SessionScheduler user={user} onBack={() => navigate('/dashboard')} /> : <Navigate to="/auth" />} />
-      <Route path="/video-call" element={user ? <VideoCall user={user} onLeave={() => navigate('/dashboard')} /> : <Navigate to="/auth" />} />
+      <Route
+        path="/scheduler"
+        element={
+          user ? (
+            <SessionScheduler
+              user={user}
+              onBack={() => navigate("/dashboard")}
+            />
+          ) : (
+            <Navigate to="/auth" />
+          )
+        }
+      />
+      {/* ✅ New session route */}
+      <Route
+        path="/session/:id"
+        element={
+          user ? (
+            <VideoCallWrapper user={user} onLeave={() => navigate("/dashboard")} />
+          ) : (
+            <Navigate to="/auth" />
+          )
+        }
+      />
       <Route path="*" element={<div>404 Page Not Found</div>} />
     </Routes>
   );
@@ -84,23 +147,22 @@ function App() {
 
   // Auto login by fetching /me with token from localStorage
   const fetchCurrentUser = async () => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (!token) {
       setLoading(false);
       return;
     }
 
     try {
-      const res = await axios.get('http://localhost:5000/api/auth/me', {
+      const res = await axios.get("http://localhost:5000/api/auth/me", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      setUser(res.data);    
-      // console.log('first',res.data);
+      setUser(res.data);
     } catch (error) {
-      console.error('Failed to fetch current user:', error);
-      localStorage.removeItem('token');
+      console.error("Failed to fetch current user:", error);
+      localStorage.removeItem("token");
       setUser(null);
     } finally {
       setLoading(false);
@@ -110,9 +172,6 @@ function App() {
   useEffect(() => {
     fetchCurrentUser();
   }, []);
-  useEffect(()=>{
-  console.log(user);
-  },[user])
 
   return (
     <Router>
@@ -122,4 +181,3 @@ function App() {
 }
 
 export default App;
-
