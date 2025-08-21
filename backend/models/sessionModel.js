@@ -12,7 +12,7 @@ const sessionSchema = new mongoose.Schema({
   enrolledLearners: [
     { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   ],
-  status: { type: String, enum: ['scheduled', 'completed', 'cancelled'], default: 'scheduled' },
+  status: { type: String, enum: ['scheduled', 'live','completed', 'cancelled'], default: 'scheduled' },
   price: { type: Number, default: 0 },
   chatMessages: [
     {
