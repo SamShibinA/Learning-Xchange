@@ -15,6 +15,8 @@ import ProfileSetup from "./pages/ProfileSetup";
 import SessionScheduler from "./pages/SessionScheduler";
 import VideoCall from "./pages/VideoCall";
 
+const backendUrl=import.meta.env.VITE_BACKEND_URL;
+
 // ✅ Wrapper for session route
 function VideoCallWrapper({ user, onLeave }) {
   const { id } = useParams();
@@ -28,7 +30,7 @@ function VideoCallWrapper({ user, onLeave }) {
       session={session}
       user={user}
       onLeave={onLeave}
-      backendUrl="http://localhost:5000"
+      backendUrl={backendUrl}
     />
   );
 }
@@ -154,7 +156,7 @@ function App() {
     }
 
     try {
-      const res = await axios.get("http://localhost:5000/api/auth/me", {
+      const res = await axios.get(`${backendUrl}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

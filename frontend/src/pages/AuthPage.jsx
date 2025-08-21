@@ -16,6 +16,7 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { BookOpen, GraduationCap } from 'lucide-react';
 import axios from 'axios';
 
+const backendUrl=import.meta.env.VITE_BACKEND_URL;
 const AuthPage = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -36,9 +37,9 @@ const handleSubmit = async (e) => {
   try {
     let res;
     if (isLogin) {
-      res = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      res = await axios.post(`${backendUrl}/api/auth/login`, { email, password });
     } else {
-      res = await axios.post('http://localhost:5000/api/auth/register', { name, email, password, role });
+      res = await axios.post(`${backendUrl}/api/auth/register`, { name, email, password, role });
     }
 
     // Show success message
