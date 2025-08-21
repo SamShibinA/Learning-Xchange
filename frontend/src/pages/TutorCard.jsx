@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -26,7 +27,6 @@ const colors = [
   "linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%)",
 ];
 
-// Function to assign a consistent color for each tutor based on ID
 const getColorForTutor = (tutorId) => {
   if (!tutorId) return "#ccc";
   let hash = 0;
@@ -65,17 +65,17 @@ const TutorCard = ({ tutorId }) => {
       <Card
         variant="outlined"
         sx={{
-          p: 3,
+          p: { xs: 2, sm: 3 },
           borderRadius: 4,
           boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
           backgroundColor: "#f9f9fb",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          height: 160,
+          height: { xs: 120, sm: 160 },
         }}
       >
-        <CircularProgress size={28} />
+        <CircularProgress size={24} />
       </Card>
     );
   }
@@ -84,7 +84,7 @@ const TutorCard = ({ tutorId }) => {
     return (
       <Card
         sx={{
-          p: 3,
+          p: { xs: 2, sm: 3 },
           borderRadius: 4,
           boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
         }}
@@ -108,37 +108,37 @@ const TutorCard = ({ tutorId }) => {
       <Card
         variant="outlined"
         sx={{
-          p: 3,
+          p: { xs: 2, sm: 3 },
           borderRadius: 4,
           boxShadow: "0 6px 20px rgba(0,0,0,0.08)",
           backgroundColor: "#f9f9fb",
           transition: "all 0.3s ease",
           "&:hover": {
             boxShadow: "0 12px 28px rgba(0,0,0,0.15)",
-            transform: "translateY(-3px)",
+            transform: { sm: "translateY(-3px)" },
           },
         }}
       >
-        <Box display="flex" gap={2} alignItems="flex-start" mb={2}>
+        <Box display="flex" gap={2} alignItems="flex-start" mb={2} flexDirection={{ xs: "column", sm: "row" }}>
           <Avatar
             sx={{
               bgcolor: "transparent",
               backgroundImage: avatarColor,
-              width: 52,
-              height: 52,
-              fontSize: 22,
+              width: { xs: 48, sm: 52 },
+              height: { xs: 48, sm: 52 },
+              fontSize: { xs: 18, sm: 22 },
               color: "white",
             }}
           >
             {initial}
           </Avatar>
           <Box flex={1}>
-            <Typography variant="h6" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} fontSize={{ xs: "1rem", sm: "1.1rem", md: "1.25rem" }}>
               {tutor.name}
             </Typography>
             {hasRating ? (
               <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-                <Star size={18} style={{ color: "#facc15" }} fill="#facc15" />
+                <Star size={16} style={{ color: "#facc15" }} fill="#facc15" />
                 <Typography variant="body2" fontWeight={500}>
                   {Number(tutor.rating).toFixed(1)}
                 </Typography>
@@ -158,6 +158,7 @@ const TutorCard = ({ tutorId }) => {
           {tutor.bio || "No bio available."}
         </Typography>
 
+        {/* Skills */}
         <Box mb={2}>
           <Typography variant="subtitle2" color="text.primary" gutterBottom>
             Skills
@@ -172,6 +173,7 @@ const TutorCard = ({ tutorId }) => {
                   background: colors[idx % colors.length],
                   color: "white",
                   fontWeight: 500,
+                  fontSize: { xs: "0.7rem", sm: "0.8rem" },
                 }}
               />
             ))}
@@ -185,6 +187,7 @@ const TutorCard = ({ tutorId }) => {
 
         <Divider sx={{ my: 2 }} />
 
+        {/* Bottom Row */}
         <Box
           display="flex"
           flexDirection={{ xs: "column", sm: "row" }}
@@ -207,8 +210,9 @@ const TutorCard = ({ tutorId }) => {
             sx={{
               whiteSpace: "nowrap",
               borderRadius: 3,
-              py: 1.2,
-              px: 2.5,
+              py: { xs: 1, sm: 1.2 },
+              px: { xs: 2, sm: 2.5 },
+              fontSize: { xs: "0.75rem", sm: "0.85rem" },
               textTransform: "none",
               background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
               "&:hover": { background: "linear-gradient(90deg, #5a67d8 0%, #6b46c1 100%)" },
@@ -219,7 +223,7 @@ const TutorCard = ({ tutorId }) => {
         </Box>
       </Card>
 
-      {/* Modern Profile Popup */}
+      {/* Responsive Profile Popup */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -228,36 +232,36 @@ const TutorCard = ({ tutorId }) => {
         PaperProps={{
           sx: {
             borderRadius: 3,
-            padding: 3,
+            p: { xs: 2, sm: 3 },
             backgroundColor: "#f4f5f7",
             boxShadow: "0 12px 28px rgba(0,0,0,0.16)",
           },
         }}
       >
-        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: { xs: 1, sm: 2 } }}>
           <Box display="flex" alignItems="center" gap={2}>
             <Avatar
               sx={{
                 bgcolor: "transparent",
                 backgroundImage: avatarColor,
-                width: 50,
-                height: 50,
-                fontSize: 22,
+                width: { xs: 40, sm: 50 },
+                height: { xs: 40, sm: 50 },
+                fontSize: { xs: 18, sm: 22 },
                 color: "white",
               }}
             >
               {initial}
             </Avatar>
-            <Typography variant="h6" fontWeight={700}>
+            <Typography variant="h6" fontWeight={700} fontSize={{ xs: "1rem", sm: "1.25rem" }}>
               {tutor.name}
             </Typography>
           </Box>
-          <IconButton onClick={() => setOpen(false)}>
-            <X size={20} />
+          <IconButton onClick={() => setOpen(false)} size="small">
+            <X size={18} />
           </IconButton>
         </DialogTitle>
 
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ p: { xs: 2, sm: 3 } }}>
           <Stack spacing={3}>
             <Box>
               <Typography variant="subtitle2" mb={1} fontWeight={600}>
@@ -282,7 +286,7 @@ const TutorCard = ({ tutorId }) => {
                       background: colors[idx % colors.length],
                       color: "white",
                       fontWeight: 600,
-                      fontSize: "0.8rem",
+                      fontSize: { xs: "0.7rem", sm: "0.8rem" },
                     }}
                   />
                 ))}
@@ -299,7 +303,7 @@ const TutorCard = ({ tutorId }) => {
             </Box>
 
             <Box display="flex" alignItems="center" gap={1}>
-              <Star size={20} style={{ color: "#facc15" }} fill="#facc15" />
+              <Star size={18} style={{ color: "#facc15" }} fill="#facc15" />
               <Typography variant="body2" fontWeight={500}>
                 {hasRating ? `${Number(tutor.rating).toFixed(1)} (${totalRatings} reviews)` : "New tutor"}
               </Typography>
@@ -310,7 +314,8 @@ const TutorCard = ({ tutorId }) => {
               variant="contained"
               sx={{
                 borderRadius: 3,
-                py: 1.3,
+                py: { xs: 1, sm: 1.3 },
+                fontSize: { xs: "0.8rem", sm: "0.9rem" },
                 background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
                 "&:hover": { background: "linear-gradient(90deg, #5a67d8 0%, #6b46c1 100%)" },
               }}
