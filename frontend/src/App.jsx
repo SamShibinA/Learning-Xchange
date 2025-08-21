@@ -9,6 +9,7 @@ import {
   useParams,
   useLocation,
 } from "react-router-dom";
+import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import ProfileSetup from "./pages/ProfileSetup";
@@ -50,7 +51,7 @@ function AppRoutes({ user, setUser, loading }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    navigate("/auth");
+    navigate("/");
   };
 
   const handleProfileComplete = (updatedUser) => {
@@ -62,11 +63,14 @@ function AppRoutes({ user, setUser, loading }) {
 
   return (
     <Routes>
+      <Route 
+      path="/"
+      element={<HomePage/>}/>
       <Route
         path="/"
         element={
           !user ? (
-            <Navigate to="/auth" />
+            <Navigate to="/" />
           ) : !user.profileComplete ? (
             <Navigate to="/profile-setup" />
           ) : (
