@@ -9,11 +9,14 @@ import {
   useParams,
   useLocation,
 } from "react-router-dom";
+import HomePage from "./pages/HomePage";
 import AuthPage from "./pages/AuthPage";
 import Dashboard from "./pages/Dashboard";
 import ProfileSetup from "./pages/ProfileSetup";
 import SessionScheduler from "./pages/SessionScheduler";
 import VideoCall from "./pages/VideoCall";
+
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // ✅ Wrapper for session route
 function VideoCallWrapper({ user, onLeave }) {
@@ -28,7 +31,7 @@ function VideoCallWrapper({ user, onLeave }) {
       session={session}
       user={user}
       onLeave={onLeave}
-      backendUrl="http://localhost:5000"
+      backendUrl={backendUrl}
     />
   );
 }
@@ -48,7 +51,7 @@ function AppRoutes({ user, setUser, loading }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    navigate("/auth");
+    navigate("/"); // ✅ Always send back to homepage
   };
 
   const handleProfileComplete = (updatedUser) => {
@@ -59,85 +62,91 @@ function AppRoutes({ user, setUser, loading }) {
   if (loading) return <div>Loading...</div>;
 
   return (
+
     <Routes>
-      <Route
-        path="/"
-        element={
-          !user ? (
-            <Navigate to="/auth" />
-          ) : !user.profileComplete ? (
-            <Navigate to="/profile-setup" />
-          ) : (
-            <Navigate to="/dashboard" />
-          )
-        }
-      />
-      <Route
-        path="/auth"
-        element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/" />}
-      />
-      <Route
-        path="/dashboard"
-        element={
-          !user ? (
-            <Navigate to="/auth" />
-          ) : !user.profileComplete ? (
-            <Navigate to="/profile-setup" />
-          ) : (
-            <Dashboard
-              user={user}
-              onJoinCall={(session) =>
-                navigate(`/session/${session.id}`, { state: { session } })
-              }
-              onSchedule={() => navigate("/scheduler")}
-              onProfileEdit={() => navigate("/profile-setup")}
-              onLogout={handleLogout}
-            />
-          )
-        }
-      />
-      <Route
-        path="/profile-setup"
-        element={
-          !user ? (
-            <Navigate to="/auth" />
-          ) : user.profileComplete ? (
-            <Navigate to="/dashboard" />
-          ) : (
-            <ProfileSetup
-              user={user}
-              onComplete={handleProfileComplete}
-              onBack={() => navigate("/dashboard")}
-            />
-          )
-        }
-      />
-      <Route
-        path="/scheduler"
-        element={
-          user ? (
-            <SessionScheduler
-              user={user}
-              onBack={() => navigate("/dashboard")}
-            />
-          ) : (
-            <Navigate to="/auth" />
-          )
-        }
-      />
-      {/* ✅ New session route */}
-      <Route
-        path="/session/:id"
-        element={
-          user ? (
-            <VideoCallWrapper user={user} onLeave={() => navigate("/dashboard")} />
-          ) : (
-            <Navigate to="/auth" />
-          )
-        }
-      />
-      <Route path="*" element={<div>404 Page Not Found</div>} />
-    </Routes>
+  {/* HomePage */}
+  <Route path="/" element={<HomePage />} />
+
+  {/* Auth Page */}
+  <Route
+    path="/auth"
+    element={user ? <Navigate to="/dashboard" /> : <AuthPage onLogin={handleLogin} />}
+  />
+
+  {/* Dashboard */}
+  <Route
+    path="/dashboard"
+    element={
+      !user ? (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      ) : !user.profileComplete ? (
+        <Navigate to="/profile-setup" />
+      ) : (
+        <Dashboard
+          user={user}
+          onJoinCall={(session) =>
+            navigate(`/session/${session.id}`, { state: { session } })
+          }
+          onSchedule={() => navigate("/scheduler")}
+          onProfileEdit={() => navigate("/profile-setup")}
+          onLogout={handleLogout}
+        />
+      )
+    }
+  />
+
+  {/* Profile Setup */}
+  <Route
+    path="/profile-setup"
+    element={
+      !user ? (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      ) : user.profileComplete ? (
+        <Navigate to="/dashboard" />
+      ) : (
+        <ProfileSetup
+          user={user}
+          onComplete={handleProfileComplete}
+          onBack={() => navigate("/dashboard")}
+        />
+      )
+    }
+  />
+
+  {/* Session Scheduler */}
+  <Route
+    path="/scheduler"
+    element={
+      user ? (
+        <SessionScheduler
+          user={user}
+          onBack={() => navigate("/dashboard")}
+        />
+      ) : (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      )
+    }
+  />
+
+  {/* Video Call */}
+  <Route
+    path="/session/:id"
+    element={
+      user ? (
+        <VideoCallWrapper
+          user={user}
+          onLeave={() => navigate("/dashboard")}
+        />
+      ) : (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      )
+    }
+  />
+
+  {/* Fallback */}
+  <Route path="*" element={<Navigate to="/" />} />
+</Routes>
+
   );
 }
 
@@ -154,7 +163,7 @@ function App() {
     }
 
     try {
-      const res = await axios.get("http://localhost:5000/api/auth/me", {
+      const res = await axios.get(`${backendUrl}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

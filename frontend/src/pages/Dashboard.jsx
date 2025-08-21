@@ -26,6 +26,8 @@ import {
 import SessionCard from "./SessionCard";
 import TutorCard from "./TutorCard";
 
+const backendUrl=import.meta.env.VITE_BACKEND_URL;
+
 const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) => {
   const [sessions, setSessions] = useState([]);
   const [tutors, setTutors] = useState([]);
@@ -38,7 +40,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
       const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
       // Get all sessions
-      const sessionRes = await axios.get('http://localhost:5000/api/sessions', config);
+      const sessionRes = await axios.get(`${backendUrl}/api/sessions`, config);
       console.log("All Sessions:", sessionRes.data);
       let userSessions = [];
       if (user.role === "tutor") {
@@ -52,7 +54,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
       } 
       setSessions(userSessions);
       console.log("Filtered Sessions:", userSessions);
-    const tutorsRes = await axios.get('http://localhost:5000/api/auth/users?role=tutor', config);
+    const tutorsRes = await axios.get(`${backendUrl}/api/auth/users?role=tutor`, config);
     console.log("Tutors:", tutorsRes.data);
     setTutors(tutorsRes.data.filter((t) => t.profileComplete));
     } catch (err) {
@@ -75,7 +77,7 @@ const enrollInSession = async (sessionId) => {
 
     // 🔗 Call backend enroll API
     const res = await axios.post(
-      `http://localhost:5000/api/sessions/${sessionId}/enroll`,
+      `${backendUrl}/api/sessions/${sessionId}/enroll`,
       {},
       config
     );

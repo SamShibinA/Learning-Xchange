@@ -18,6 +18,9 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 
+
+const backendUrl=import.meta.env.VITE_BACKEND_URL;
+
 const SessionScheduler = ({ onBack }) => {
   const [user, setUser] = useState(null);
   const [title, setTitle] = useState('');
@@ -38,7 +41,7 @@ const SessionScheduler = ({ onBack }) => {
           setError('You must be logged in to schedule a session.');
           return;
         }
-        const res = await axios.get('http://localhost:5000/api/auth/me', {
+        const res = await axios.get(`${backendUrl}/api/auth/me`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setUser(res.data);
@@ -79,7 +82,7 @@ const SessionScheduler = ({ onBack }) => {
     };
 
     try {
-      await axios.post('http://localhost:5000/api/sessions', session, {
+      await axios.post(`${backendUrl}/api/sessions`, session, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },

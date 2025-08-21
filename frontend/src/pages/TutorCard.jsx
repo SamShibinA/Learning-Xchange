@@ -18,6 +18,10 @@ import {
 import { Star, X } from "lucide-react";
 import axios from "axios";
 
+
+const backendUrl=import.meta.env.VITE_BACKEND_URL;
+
+
 const colors = [
   "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
   "linear-gradient(135deg, #f6d365 0%, #fda085 100%)",
@@ -48,7 +52,7 @@ const TutorCard = ({ tutorId }) => {
     const fetchTutor = async () => {
       try {
         const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
-        const res = await axios.get(`http://localhost:5000/api/profile/${tutorId}`, config);
+        const res = await axios.get(`${backendUrl}/api/profile/${tutorId}`, config);
         setTutor(res.data);
       } catch (err) {
         console.error("Error fetching tutor data:", err);
