@@ -51,7 +51,9 @@ function AppRoutes({ user, setUser, loading }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
+
     navigate("/"); // ✅ Always send back to homepage
+
   };
 
   const handleProfileComplete = (updatedUser) => {
