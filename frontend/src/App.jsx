@@ -16,7 +16,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import SessionScheduler from "./pages/SessionScheduler";
 import VideoCall from "./pages/VideoCall";
 
-const backendUrl=import.meta.env.VITE_BACKEND_URL;
+const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // ✅ Wrapper for session route
 function VideoCallWrapper({ user, onLeave }) {
@@ -51,7 +51,7 @@ function AppRoutes({ user, setUser, loading }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    navigate("/");
+    navigate("/"); // ✅ After logout, go to HomePage
   };
 
   const handleProfileComplete = (updatedUser) => {
@@ -63,25 +63,16 @@ function AppRoutes({ user, setUser, loading }) {
 
   return (
     <Routes>
-      <Route 
-      path="/"
-      element={<HomePage/>}/>
-      <Route
-        path="/"
-        element={
-          !user ? (
-            <Navigate to="/" />
-          ) : !user.profileComplete ? (
-            <Navigate to="/profile-setup" />
-          ) : (
-            <Navigate to="/dashboard" />
-          )
-        }
-      />
+      {/* ✅ Home page is always at root */}
+      <Route path="/" element={<HomePage />} />
+
+      {/* Auth page */}
       <Route
         path="/auth"
-        element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/" />}
+        element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/dashboard" />}
       />
+
+      {/* Dashboard */}
       <Route
         path="/dashboard"
         element={
@@ -102,6 +93,8 @@ function AppRoutes({ user, setUser, loading }) {
           )
         }
       />
+
+      {/* Profile setup */}
       <Route
         path="/profile-setup"
         element={
@@ -118,20 +111,20 @@ function AppRoutes({ user, setUser, loading }) {
           )
         }
       />
+
+      {/* Scheduler */}
       <Route
         path="/scheduler"
         element={
           user ? (
-            <SessionScheduler
-              user={user}
-              onBack={() => navigate("/dashboard")}
-            />
+            <SessionScheduler user={user} onBack={() => navigate("/dashboard")} />
           ) : (
             <Navigate to="/auth" />
           )
         }
       />
-      {/* ✅ New session route */}
+
+      {/* Session route */}
       <Route
         path="/session/:id"
         element={
@@ -142,6 +135,8 @@ function AppRoutes({ user, setUser, loading }) {
           )
         }
       />
+
+      {/* Fallback */}
       <Route path="*" element={<div>404 Page Not Found</div>} />
     </Routes>
   );
