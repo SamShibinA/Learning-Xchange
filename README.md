@@ -10,4 +10,4 @@ backend installation
 
     npm init -y
 
-    npm install express mongoose dotenv cors bcryptjs --save-dev nodemon
+    npm install express mongoose dotenv cors bcryptjs --save-dev nodemon ws

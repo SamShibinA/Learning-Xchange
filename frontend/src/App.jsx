@@ -51,7 +51,9 @@ function AppRoutes({ user, setUser, loading }) {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setUser(null);
-    navigate("/"); // ✅ After logout, go to HomePage
+
+    navigate("/"); // ✅ Always send back to homepage
+
   };
 
   const handleProfileComplete = (updatedUser) => {
@@ -62,83 +64,91 @@ function AppRoutes({ user, setUser, loading }) {
   if (loading) return <div>Loading...</div>;
 
   return (
+
     <Routes>
-      {/* ✅ Home page is always at root */}
-      <Route path="/" element={<HomePage />} />
+  {/* HomePage */}
+  <Route path="/" element={<HomePage />} />
 
-      {/* Auth page */}
-      <Route
-        path="/auth"
-        element={!user ? <AuthPage onLogin={handleLogin} /> : <Navigate to="/dashboard" />}
-      />
+  {/* Auth Page */}
+  <Route
+    path="/auth"
+    element={user ? <Navigate to="/dashboard" /> : <AuthPage onLogin={handleLogin} />}
+  />
 
-      {/* Dashboard */}
-      <Route
-        path="/dashboard"
-        element={
-          !user ? (
-            <Navigate to="/auth" />
-          ) : !user.profileComplete ? (
-            <Navigate to="/profile-setup" />
-          ) : (
-            <Dashboard
-              user={user}
-              onJoinCall={(session) =>
-                navigate(`/session/${session.id}`, { state: { session } })
-              }
-              onSchedule={() => navigate("/scheduler")}
-              onProfileEdit={() => navigate("/profile-setup")}
-              onLogout={handleLogout}
-            />
-          )
-        }
-      />
+  {/* Dashboard */}
+  <Route
+    path="/dashboard"
+    element={
+      !user ? (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      ) : !user.profileComplete ? (
+        <Navigate to="/profile-setup" />
+      ) : (
+        <Dashboard
+          user={user}
+          onJoinCall={(session) =>
+            navigate(`/session/${session.id}`, { state: { session } })
+          }
+          onSchedule={() => navigate("/scheduler")}
+          onProfileEdit={() => navigate("/profile-setup")}
+          onLogout={handleLogout}
+        />
+      )
+    }
+  />
 
-      {/* Profile setup */}
-      <Route
-        path="/profile-setup"
-        element={
-          !user ? (
-            <Navigate to="/auth" />
-          ) : user.profileComplete ? (
-            <Navigate to="/dashboard" />
-          ) : (
-            <ProfileSetup
-              user={user}
-              onComplete={handleProfileComplete}
-              onBack={() => navigate("/dashboard")}
-            />
-          )
-        }
-      />
+  {/* Profile Setup */}
+  <Route
+    path="/profile-setup"
+    element={
+      !user ? (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      ) : user.profileComplete ? (
+        <Navigate to="/dashboard" />
+      ) : (
+        <ProfileSetup
+          user={user}
+          onComplete={handleProfileComplete}
+          onBack={() => navigate("/dashboard")}
+        />
+      )
+    }
+  />
 
-      {/* Scheduler */}
-      <Route
-        path="/scheduler"
-        element={
-          user ? (
-            <SessionScheduler user={user} onBack={() => navigate("/dashboard")} />
-          ) : (
-            <Navigate to="/auth" />
-          )
-        }
-      />
+  {/* Session Scheduler */}
+  <Route
+    path="/scheduler"
+    element={
+      user ? (
+        <SessionScheduler
+          user={user}
+          onBack={() => navigate("/dashboard")}
+        />
+      ) : (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      )
+    }
+  />
 
-      {/* Session route */}
-      <Route
-        path="/session/:id"
-        element={
-          user ? (
-            <VideoCallWrapper user={user} onLeave={() => navigate("/dashboard")} />
-          ) : (
-            <Navigate to="/auth" />
-          )
-        }
-      />
+  {/* Video Call */}
+  <Route
+    path="/session/:id"
+    element={
+      user ? (
+        <VideoCallWrapper
+          user={user}
+          onLeave={() => navigate("/dashboard")}
+        />
+      ) : (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      )
+    }
+  />
 
-      {/* Fallback */}
-      <Route path="*" element={<div>404 Page Not Found</div>} />
-    </Routes>
+  {/* Fallback */}
+  <Route path="*" element={<Navigate to="/" />} />
+</Routes>
+
   );
 }
 
