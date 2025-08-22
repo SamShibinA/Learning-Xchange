@@ -1,25 +1,3 @@
-// const express = require('express');
-// const dotenv = require('dotenv');
-// const cors = require('cors');
-// const { connectDB } = require('./config/db');
-// const authRoutes = require('./routes/authRoutes');
-// const profileRoutes = require('./routes/profileRoutes');
-// const sessionRoutes=require('./routes/sessionRoutes');
-// dotenv.config();
-// connectDB();
-
-// const app = express();
-// app.use(cors());
-// app.use(express.json());
-
-// // Routes
-// app.use('/api/auth', authRoutes);
-// app.use('/api/profile', profileRoutes);
-// app.use('/api/sessions',sessionRoutes);
-
-// const PORT = process.env.PORT || 5000;
-// app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
-
 const express = require("express");
 const dotenv = require("dotenv");
 const cors = require("cors");
@@ -37,6 +15,10 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("✅ API is running");
+});
 
 // Routes
 app.use("/api/auth", authRoutes);
