@@ -111,7 +111,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
       );
 
       setSessions((prev) =>
-        prev.map((item) => (item._id === sessionId ? res.data : item))
+        prev.map((item) => (item.id === sessionId ? res.data : item))
       );
 
       onJoinCall(res.data);
@@ -163,7 +163,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
       </Tabs>
 
       <Container sx={{ py: { xs: 2, sm: 4 } }}>
-        {/* === OVERVIEW === */}
+        {/* === OVERVIEW (unchanged from your original) === */}
         {tabIndex === 0 && (
           <Grid container spacing={4}>
             <Grid item xs={12} md={3}>
