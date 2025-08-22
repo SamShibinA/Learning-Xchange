@@ -1,3 +1,5 @@
+
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import {
@@ -255,30 +257,35 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
               )}
             </Box>
             <Grid container spacing={3}>
-              {sessions.length > 0 ? (
-                sessions.map((s) => (
-                  <Grid item xs={12} sm={6} md={4} key={s._id}>
-                    <SessionCard
-                      session={s}
-                      userRole={user.role}
-                      userId={user._id}
-                      onEnroll={enrollInSession}
-                      isEnrolled={
-                        Array.isArray(s.enrolledLearners) &&
-                        s.enrolledLearners.includes(user._id)
-                      }
-                      onStartLive={startLiveSession}
-                      onJoin={onJoinCall}
-                      detailed
-                    />
-                  </Grid>
-                ))
-              ) : (
-                <Typography align="center" sx={{ mt: 6, width: "100%" }} color="text.secondary">
-                  No sessions found
-                </Typography>
-              )}
-            </Grid>
+  {sessions.length > 0 ? (
+    sessions.map((s) => (
+      <Grid item xs={12} sm={6} md={3} key={s._id}>
+        <SessionCard
+          session={s}
+          userRole={user.role}
+          userId={user._id}
+          onEnroll={enrollInSession}
+          isEnrolled={
+            Array.isArray(s.enrolledLearners) &&
+            s.enrolledLearners.includes(user._id)
+          }
+          onStartLive={startLiveSession}
+          onJoin={onJoinCall}
+          detailed
+        />
+      </Grid>
+    ))
+  ) : (
+    <Typography
+      align="center"
+      sx={{ mt: 6, width: "100%" }}
+      color="text.secondary"
+    >
+      No sessions found
+    </Typography>
+  )}
+</Grid>
+
           </Box>
         )}
 
