@@ -369,8 +369,9 @@ const VideoCall = ({ session, user, onLeave }) => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const participants = [
-    { id: user.id, name: user.name, isHost: session.tutorId === user.id },
+    { id: user._id, name: user.name, isHost: session.tutorId === user.id },
   ];
+
 
   const getMedia = async () => {
     try {
