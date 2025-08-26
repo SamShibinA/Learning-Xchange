@@ -84,47 +84,63 @@ const ChatBox = ({
     );
   };
 
-  const ChatContent = (
-    <>
+
+      const ChatContent = (
       <Box
-        p={2}
         sx={{
-          borderBottom: `1px solid ${theme.palette.divider}`,
-          bgcolor: "grey.100",
+          display: "flex",
+          flexDirection: "column",
+          height: "100%",   // 🔑 ensures full height
         }}
       >
-        <Typography variant="subtitle1" fontWeight="bold">
-          Session Chat
-        </Typography>
-      </Box>
-
-      <Box flex={1} p={2} sx={{ overflowY: "auto" }}>
-        {chatMessages.map((msg) => (
-          <ChatBubble key={msg.id} msg={msg} />
-        ))}
-        <div ref={chatEndRef} />
-      </Box>
-
-      <Divider />
-      <Box p={2} display="flex" gap={1}>
-        <TextField
-          fullWidth
-          size="small"
-          placeholder="Type a message..."
-          value={chatMessage}
-          onChange={(e) => setChatMessage(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-        />
-        <IconButton
-          onClick={sendMessage}
-          disabled={!chatMessage.trim()}
-          color="primary"
+        {/* Header */}
+        <Box
+          p={2}
+          sx={{
+            borderBottom: `1px solid ${theme.palette.divider}`,
+            bgcolor: "grey.100",
+          }}
         >
-          <Send />
-        </IconButton>
+          <Typography variant="subtitle1" fontWeight="bold">
+            Session Chat
+          </Typography>
+        </Box>
+
+        {/* Messages */}
+        <Box
+          flex={1}             // 🔑 expands to fill available space
+          p={2}
+          sx={{ overflowY: "auto" }}
+        >
+          {chatMessages.map((msg) => (
+            <ChatBubble key={msg.id} msg={msg} />
+          ))}
+          <div ref={chatEndRef} />
+        </Box>
+
+        {/* Input */}
+        <Divider />
+        <Box p={2} display="flex" gap={1}>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Type a message..."
+            value={chatMessage}
+            onChange={(e) => setChatMessage(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+          />
+          <IconButton
+            onClick={sendMessage}
+            disabled={!chatMessage.trim()}
+            color="primary"
+          >
+            <Send />
+          </IconButton>
+        </Box>
       </Box>
-    </>
-  );
+    );
+
+
 
   if (isMobile) {
     return (
