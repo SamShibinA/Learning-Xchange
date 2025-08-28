@@ -808,6 +808,7 @@ import {
   Fullscreen,
   FullscreenExit,
 } from "@mui/icons-material";
+
 import { useMediaQuery } from "@mui/material";
 import ChatBox from "./ChatBox";
 
