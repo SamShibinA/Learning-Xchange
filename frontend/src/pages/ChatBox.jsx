@@ -84,63 +84,60 @@
 //     );
 //   };
 
-
-//       const ChatContent = (
+//   const ChatContent = (
+//     <Box
+//       sx={{
+//         display: "flex",
+//         flexDirection: "column",
+//         height: "100%", // 🔑 ensures full height
+//       }}
+//     >
+//       {/* Header */}
 //       <Box
+//         p={2}
 //         sx={{
-//           display: "flex",
-//           flexDirection: "column",
-//           height: "100%",   // 🔑 ensures full height
+//           borderBottom: `1px solid ${theme.palette.divider}`,
+//           bgcolor: "grey.100",
 //         }}
 //       >
-//         {/* Header */}
-//         <Box
-//           p={2}
-//           sx={{
-//             borderBottom: `1px solid ${theme.palette.divider}`,
-//             bgcolor: "grey.100",
-//           }}
-//         >
-//           <Typography variant="subtitle1" fontWeight="bold">
-//             Session Chat
-//           </Typography>
-//         </Box>
-
-//         {/* Messages */}
-//         <Box
-//           flex={1}             // 🔑 expands to fill available space
-//           p={2}
-//           sx={{ overflowY: "auto" }}
-//         >
-//           {chatMessages.map((msg) => (
-//             <ChatBubble key={msg.id} msg={msg} />
-//           ))}
-//           <div ref={chatEndRef} />
-//         </Box>
-
-//         {/* Input */}
-//         <Divider />
-//         <Box p={2} display="flex" gap={1}>
-//           <TextField
-//             fullWidth
-//             size="small"
-//             placeholder="Type a message..."
-//             value={chatMessage}
-//             onChange={(e) => setChatMessage(e.target.value)}
-//             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
-//           />
-//           <IconButton
-//             onClick={sendMessage}
-//             disabled={!chatMessage.trim()}
-//             color="primary"
-//           >
-//             <Send />
-//           </IconButton>
-//         </Box>
+//         <Typography variant="subtitle1" fontWeight="bold">
+//           Session Chat
+//         </Typography>
 //       </Box>
-//     );
 
+//       {/* Messages */}
+//       <Box
+//         flex={1} // 🔑 expands to fill available space
+//         p={2}
+//         sx={{ overflowY: "auto" }}
+//       >
+//         {chatMessages.map((msg) => (
+//           <ChatBubble key={msg.id} msg={msg} />
+//         ))}
+//         <div ref={chatEndRef} />
+//       </Box>
 
+//       {/* Input */}
+//       <Divider />
+//       <Box p={2} display="flex" gap={1}>
+//         <TextField
+//           fullWidth
+//           size="small"
+//           placeholder="Type a message..."
+//           value={chatMessage}
+//           onChange={(e) => setChatMessage(e.target.value)}
+//           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
+//         />
+//         <IconButton
+//           onClick={sendMessage}
+//           disabled={!chatMessage.trim()}
+//           color="primary"
+//         >
+//           <Send />
+//         </IconButton>
+//       </Box>
+//     </Box>
+//   );
 
 //   if (isMobile) {
 //     return (
@@ -166,6 +163,7 @@
 //       elevation={3}
 //       sx={{
 //         width: 340,
+//         height: "100%",
 //         display: "flex",
 //         flexDirection: "column",
 //         borderLeft: `1px solid ${theme.palette.divider}`,
@@ -178,6 +176,7 @@
 // };
 
 // export default ChatBox;
+
 
 
 import React, { useEffect, useRef } from "react";
@@ -271,7 +270,7 @@ const ChatBox = ({
       sx={{
         display: "flex",
         flexDirection: "column",
-        height: "100%", // 🔑 ensures full height
+        height: "100%", // keeps messages + input aligned
       }}
     >
       {/* Header */}
@@ -288,11 +287,7 @@ const ChatBox = ({
       </Box>
 
       {/* Messages */}
-      <Box
-        flex={1} // 🔑 expands to fill available space
-        p={2}
-        sx={{ overflowY: "auto" }}
-      >
+      <Box flex={1} p={2} sx={{ overflowY: "auto" }}>
         {chatMessages.map((msg) => (
           <ChatBubble key={msg.id} msg={msg} />
         ))}
@@ -345,7 +340,7 @@ const ChatBox = ({
       elevation={3}
       sx={{
         width: 340,
-        height: "100%",
+        flexShrink: 0, // 🔑 prevents it from stretching or squishing
         display: "flex",
         flexDirection: "column",
         borderLeft: `1px solid ${theme.palette.divider}`,
