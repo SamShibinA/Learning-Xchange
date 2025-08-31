@@ -1,3 +1,476 @@
+// import React, { useEffect, useRef, useState } from "react";
+// import {
+//   IconButton,
+//   Box,
+//   Typography,
+//   Avatar,
+//   useTheme,
+//   Stack,
+//   Paper,
+// } from "@mui/material";
+// import {
+//   Videocam,
+//   VideocamOff,
+//   Mic,
+//   MicOff,
+//   CallEnd,
+//   Chat,
+//   People,
+//   Settings,
+//   Fullscreen,
+//   FullscreenExit,
+// } from "@mui/icons-material";
+// import { useMediaQuery } from "@mui/material";
+// import ChatBox from "./ChatBox";
+// import RatingCard from "./RatingCard";
+
+
+// const RemoteVideo = ({ stream }) => {
+//   const videoRef = useRef(null);
+
+//   useEffect(() => {
+//     if (videoRef.current) {
+//       videoRef.current.srcObject = stream;
+//     }
+//   }, [stream]);
+
+//   return (
+//     <video
+//       ref={videoRef}
+//       autoPlay
+//       playsInline
+//       style={{ width: "45%", height: "auto", margin: "5px", objectFit: "cover" }}
+//     />
+//   );
+// };
+
+// const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
+//   const localVideoRef = useRef(null);
+//   const [remoteStreams, setRemoteStreams] = useState([]);
+//   const wsRef = useRef(null);
+//   const peerConnections = useRef({});
+//   const localStream = useRef(null);
+  
+//   // UI state
+//   const [isVideoOn, setIsVideoOn] = useState(true);
+//   const [isAudioOn, setIsAudioOn] = useState(true);
+//   const [showChat, setShowChat] = useState(false);
+//   const [chatMessage, setChatMessage] = useState("");
+//   const [chatMessages, setChatMessages] = useState([]);
+//   const [isFullscreen, setIsFullscreen] = useState(false);
+//   const [showRating, setShowRating] = useState(false);
+
+//   const theme = useTheme();
+//   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+//   const participants = [
+//     { id: user._id, name: user.name, isHost: session.tutorId === user._id },
+//     ...remoteStreams.map((s) => ({ id: s.peerId, name: s.peerId })),
+//   ];
+
+//   // --- Init Media + Signaling ---
+//   useEffect(() => {
+//     async function initMedia() {
+//       const stream = await navigator.mediaDevices.getUserMedia({
+//         video: true,
+//         audio: true,
+//       });
+//       localStream.current = stream;
+//       if (localVideoRef.current) {
+//         localVideoRef.current.srcObject = stream;
+//       }
+
+//       wsRef.current = new WebSocket(backendUrl.replace(/^http/, "ws"));
+//       wsRef.current.onopen = () => {
+//         wsRef.current.send(
+//           JSON.stringify({
+//             type: "join",
+//             roomId: session._id, // ✅ use MongoDB _id
+//             userId: user._id,
+//           })
+//         );
+//       };
+
+//       wsRef.current.onmessage = async (msg) => {
+//         const data = JSON.parse(msg.data);
+//         switch (data.type) {
+//           case "chat-history":
+//             setChatMessages(data.messages); // ✅ load from DB
+//             break;
+//           case "chat-message":
+//             setChatMessages((prev) => [...prev, data]); // ✅ append new
+//             break;
+//           case "user-joined":
+//             createPeerConnection(data.userId, true);
+//             break;
+//           case "offer":
+//             await createPeerConnection(data.from, false, data);
+//             break;
+//           case "answer":
+//             await peerConnections.current[data.from]?.setRemoteDescription(
+//               data.answer
+//             );
+//             break;
+//           case "candidate":
+//             if (data.candidate) {
+//               await peerConnections.current[data.from]?.addIceCandidate(
+//                 data.candidate
+//               );
+//             }
+//             break;
+//           case "user-left":
+//             handleUserLeft(data.userId);
+//             break;
+//         }
+//       };
+//     }
+//     initMedia();
+
+//     return () => {
+//       Object.values(peerConnections.current).forEach((pc) => pc.close());
+//       localStream.current?.getTracks().forEach((t) => t.stop());
+//       wsRef.current?.close();
+//     };
+//   }, []);
+
+//   // 🔑 Re-bind local video when toggling
+//   useEffect(() => {
+//     if (localVideoRef.current) {
+//       if (isVideoOn) {
+//         localVideoRef.current.srcObject = localStream.current;
+//       } else {
+//         localVideoRef.current.srcObject = null;
+//       }
+//     }
+//   }, [isVideoOn]);
+
+//   const createPeerConnection = async (peerId, isInitiator, offerData = null) => {
+//     const pc = new RTCPeerConnection();
+//     peerConnections.current[peerId] = pc;
+
+//     localStream.current.getTracks().forEach((track) =>
+//       pc.addTrack(track, localStream.current)
+//     );
+
+//     pc.ontrack = (event) => {
+//       setRemoteStreams((prev) => {
+//         const exists = prev.find((s) => s.peerId === peerId);
+//         if (exists) {
+//           return prev.map((s) =>
+//             s.peerId === peerId ? { ...s, stream: event.streams[0] } : s
+//           );
+//         }
+//         return [...prev, { peerId, stream: event.streams[0] }];
+//       });
+//     };
+
+//     pc.onicecandidate = (event) => {
+//       if (event.candidate) {
+//         wsRef.current.send(
+//           JSON.stringify({
+//             type: "candidate",
+//             target: peerId,
+//             candidate: event.candidate,
+//           })
+//         );
+//       }
+//     };
+
+//     if (isInitiator) {
+//       const offer = await pc.createOffer();
+//       await pc.setLocalDescription(offer);
+//       wsRef.current.send(
+//         JSON.stringify({ type: "offer", target: peerId, offer })
+//       );
+//     } else if (offerData) {
+//       await pc.setRemoteDescription(offerData.offer);
+//       const answer = await pc.createAnswer();
+//       await pc.setLocalDescription(answer);
+//       wsRef.current.send(
+//         JSON.stringify({ type: "answer", target: peerId, answer })
+//       );
+//     }
+//   };
+
+//   const handleUserLeft = (peerId) => {
+//     peerConnections.current[peerId]?.close();
+//     delete peerConnections.current[peerId];
+
+//     setRemoteStreams((prev) => {
+//       const leavingUser = prev.find((s) => s.peerId === peerId);
+//       if (leavingUser?.stream) {
+//         leavingUser.stream.getTracks().forEach((t) => t.stop());
+//       }
+//       return prev.filter((s) => s.peerId !== peerId);
+//     });
+//   };
+
+//     const handleRatingSubmit = async (rating) => {
+//       try {
+//         const token = localStorage.getItem("token");
+//         if (!token) {
+//           alert("You must be logged in to rate a tutor.");
+//           return;
+//         }
+
+//         // Send rating to backend
+//         const res = await fetch(`${backendUrl}/api/profile/${session.tutorId._id}/rate`, {
+//           method: "POST",
+//           headers: {
+//             "Content-Type": "application/json",
+//             Authorization: `Bearer ${token}`, // ✅ required for auth
+//           },
+//           body: JSON.stringify({ rating }),
+//         });
+
+//         if (!res.ok) {
+//           const err = await res.json();
+//           throw new Error(err.message || "Failed to submit rating");
+//         }
+
+//         const data = await res.json(); // contains updated tutor
+
+//         // Close the rating modal
+//         setShowRating(false);
+
+//         // Clean up call
+//         Object.values(peerConnections.current).forEach((pc) => pc.close());
+//         peerConnections.current = {};
+//         localStream.current?.getTracks().forEach((t) => t.stop());
+//         wsRef.current?.close();
+//         onLeave();
+
+//         alert("Thanks for rating! 🎉");
+//       } catch (err) {
+//         console.error("Error submitting rating:", err);
+//         alert(err.message);
+//       }
+//     };
+
+
+
+//   const handleEndCall = () => {
+//     if(user._id!==session.tutorId){ 
+//       setShowRating(true);
+//     }
+//     else{  
+//       Object.values(peerConnections.current).forEach((pc) => pc.close());
+//       peerConnections.current = {};
+//       localStream.current?.getTracks().forEach((t) => t.stop());
+//       wsRef.current?.close();
+//       onLeave();
+//     }
+    
+//   };
+
+//  // ✅ Send chat message via WebSocket (stored in DB server-side)
+//   const sendMessage = () => {
+//   if (chatMessage.trim() && wsRef.current?.readyState === WebSocket.OPEN) {
+//     const newMessage = {
+//       type: "chat-message",
+//       roomId: session._id,
+//       userId: user._id,
+//       senderName: user.name,
+//       message: chatMessage.trim(),
+//     };
+
+//     // only send to server, don't append locally
+//     wsRef.current.send(JSON.stringify(newMessage));
+//     setChatMessage("");
+//   }
+// };
+
+//   const toggleFullscreen = () => {
+//     if (!document.fullscreenElement) {
+//       document.documentElement.requestFullscreen();
+//       setIsFullscreen(true);
+//     } else {
+//       document.exitFullscreen();
+//       setIsFullscreen(false);
+//     }
+//   };
+
+//   return (
+//     <Box
+//       sx={{
+//         width: "100vw",
+//         height: "100vh",
+//         display: "flex",
+//         flexDirection: "column",
+//         bgcolor: "grey.900",
+//       }}
+//     >
+//       {/* Header */}
+//       {!isFullscreen && !isMobile && (
+//         <Paper
+//           elevation={2}
+//           sx={{
+//             p: 2,
+//             display: "flex",
+//             justifyContent: "space-between",
+//             alignItems: "center",
+//             bgcolor: "grey.800",
+//             borderRadius: 0,
+//           }}
+//         >
+//           <Box display="flex" alignItems="center" gap={2}>
+//             <Box width={10} height={10} borderRadius="50%" bgcolor="error.main" />
+//             <Typography variant="h6" color="white" fontWeight="bold">
+//               LIVE – {session.title}
+//             </Typography>
+//           </Box>
+//           <Box display="flex" alignItems="center" gap={1} color="grey.300">
+//             <People />
+//             <Typography>{participants.length}</Typography>
+//           </Box>
+//         </Paper>
+//       )}
+
+//       {/* Main Layout */}
+//       <Box
+//         sx={{
+//           flex: 1,
+//           display: "flex",
+//           flexDirection: "row",
+//           height: "100%",
+//           overflow: "hidden",
+//         }}
+//       >
+//         {/* Video Area */}
+//         <Box
+//           flex={1}
+//           sx={{
+//             position: "relative",
+//             backgroundColor: "#000",
+//             display: "flex",
+//             flexWrap: "wrap",
+//             justifyContent: "center",
+//             alignItems: "center",
+//           }}
+//         >
+//           {/* Local Video */}
+//           {isVideoOn ? (
+//             <video
+//               ref={localVideoRef}
+//               autoPlay
+//               muted
+//               playsInline
+//               style={{
+//                 width: remoteStreams.length ? "45%" : "100%",
+//                 height: "auto",
+//                 margin: "5px",
+//                 objectFit: "cover",
+//               }}
+//             />
+//           ) : (
+//             <Box textAlign="center" color="white">
+//               <Avatar sx={{ width: 80, height: 80, margin: "auto" }}>
+//                 {user.name.charAt(0)}
+//               </Avatar>
+//               <Typography mt={2}>Camera is off</Typography>
+//             </Box>
+//           )}
+
+//           {/* Remote Videos */}
+//           {remoteStreams.map(({ peerId, stream }) => (
+//             <RemoteVideo key={peerId} stream={stream} />
+//           ))}
+
+//           {/* Control Bar */}
+//           <Stack
+//             direction="row"
+//             spacing={isMobile ? 3 : 2}
+//             position="absolute"
+//             bottom={isMobile ? 16 : 24}
+//             left="50%"
+//             sx={{
+//               transform: "translateX(-50%)",
+//               bgcolor: "rgba(0,0,0,0.6)",
+//               borderRadius: 5,
+//               px: isMobile ? 3 : 2,
+//               py: 1,
+//               backdropFilter: "blur(6px)",
+//             }}
+//           >
+//             <IconButton
+//               onClick={() => {
+//                 setIsAudioOn((prev) => {
+//                   localStream.current?.getAudioTracks().forEach(
+//                     (track) => (track.enabled = !prev)
+//                   );
+//                   return !prev;
+//                 });
+//               }}
+//               sx={{ color: isAudioOn ? "white" : "error.main" }}
+//             >
+//               {isAudioOn ? <Mic /> : <MicOff />}
+//             </IconButton>
+
+//             <IconButton
+//               onClick={() => {
+//                 setIsVideoOn((prev) => {
+//                   localStream.current?.getVideoTracks().forEach(
+//                     (track) => (track.enabled = !prev)
+//                   );
+//                   return !prev;
+//                 });
+//               }}
+//               sx={{ color: isVideoOn ? "white" : "error.main" }}
+//             >
+//               {isVideoOn ? <Videocam /> : <VideocamOff />}
+//             </IconButton>
+
+//             <IconButton
+//               onClick={() => setShowChat((prev) => !prev)}
+//               sx={{ color: showChat ? "primary.main" : "white" }}
+//             >
+//               <Chat />
+//             </IconButton>
+
+//             {!isMobile && (
+//               <IconButton sx={{ color: "white" }}>
+//                 <Settings />
+//               </IconButton>
+//             )}
+
+//             <IconButton onClick={toggleFullscreen} sx={{ color: "white" }}>
+//               {isFullscreen ? <FullscreenExit /> : <Fullscreen />}
+//             </IconButton>
+
+//             <IconButton onClick={handleEndCall} sx={{ color: "error.main" }}>
+//               <CallEnd />
+//             </IconButton>
+//           </Stack>
+//         </Box>
+
+//         {/* ChatBox */}
+//         {showChat && (
+//           <ChatBox
+//             chatMessages={chatMessages}
+//             chatMessage={chatMessage}
+//             setChatMessage={setChatMessage}
+//             sendMessage={sendMessage}
+//             showChat={showChat}
+//             setShowChat={setShowChat}
+//             isMobile={isMobile}
+//             user={user}
+//           />
+//         )}
+//         <RatingCard
+//           open={showRating}
+//           tutor={{ name: session.tutorId?.name }} // adjust depending on your session schema
+//           onSubmit={handleRatingSubmit}
+//         />
+        
+//       </Box>
+//     </Box>
+    
+//   );
+// };
+
+// export default VideoCall;
+
+
 import React, { useEffect, useRef, useState } from "react";
 import {
   IconButton,
@@ -24,33 +497,82 @@ import { useMediaQuery } from "@mui/material";
 import ChatBox from "./ChatBox";
 import RatingCard from "./RatingCard";
 
-
-const RemoteVideo = ({ stream }) => {
+const VideoTile = ({ id, name, stream, isLocal, maximizedPeer, setMaximizedPeer, isVideoOn }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
-    if (videoRef.current) {
+    if (videoRef.current && stream) {
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
 
   return (
-    <video
-      ref={videoRef}
-      autoPlay
-      playsInline
-      style={{ width: "45%", height: "auto", margin: "5px", objectFit: "cover" }}
-    />
+    <Box
+      sx={{
+        position: "relative",
+        width: maximizedPeer ? "100%" : "45%",
+        height: maximizedPeer ? "100%" : "auto",
+        margin: "5px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        bgcolor: "#000",
+        borderRadius: "8px",
+        overflow: "hidden",
+        "&:hover .controls": { opacity: 1 },
+      }}
+    >
+      {isVideoOn || !isLocal ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isLocal}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      ) : (
+        <Box textAlign="center" color="white">
+          <Avatar sx={{ width: 80, height: 80, margin: "auto" }}>
+            {name?.charAt(0)}
+          </Avatar>
+          <Typography mt={2}>Camera is off</Typography>
+        </Box>
+      )}
+
+      {/* Hover Maximize Button */}
+      <IconButton
+        className="controls"
+        size="small"
+        onClick={() =>
+          setMaximizedPeer(maximizedPeer === id ? null : id)
+        }
+        sx={{
+          position: "absolute",
+          top: 8,
+          right: 8,
+          bgcolor: "rgba(0,0,0,0.5)",
+          color: "white",
+          opacity: 0,
+          transition: "opacity 0.3s",
+        }}
+      >
+        {maximizedPeer === id ? <FullscreenExit /> : <Fullscreen />}
+      </IconButton>
+    </Box>
   );
 };
 
-const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
+const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit }) => {
   const localVideoRef = useRef(null);
   const [remoteStreams, setRemoteStreams] = useState([]);
   const wsRef = useRef(null);
   const peerConnections = useRef({});
   const localStream = useRef(null);
-  
+
   // UI state
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isAudioOn, setIsAudioOn] = useState(true);
@@ -59,12 +581,13 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
   const [chatMessages, setChatMessages] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showRating, setShowRating] = useState(false);
+  const [maximizedPeer, setMaximizedPeer] = useState(null);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const participants = [
-    { id: user._id, name: user.name, isHost: session.tutorId === user._id },
+    { id: "local", name: user.name, isHost: session.tutorId === user._id },
     ...remoteStreams.map((s) => ({ id: s.peerId, name: s.peerId })),
   ];
 
@@ -76,16 +599,13 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
         audio: true,
       });
       localStream.current = stream;
-      if (localVideoRef.current) {
-        localVideoRef.current.srcObject = stream;
-      }
 
       wsRef.current = new WebSocket(backendUrl.replace(/^http/, "ws"));
       wsRef.current.onopen = () => {
         wsRef.current.send(
           JSON.stringify({
             type: "join",
-            roomId: session._id, // ✅ use MongoDB _id
+            roomId: session._id,
             userId: user._id,
           })
         );
@@ -95,10 +615,10 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
         const data = JSON.parse(msg.data);
         switch (data.type) {
           case "chat-history":
-            setChatMessages(data.messages); // ✅ load from DB
+            setChatMessages(data.messages);
             break;
           case "chat-message":
-            setChatMessages((prev) => [...prev, data]); // ✅ append new
+            setChatMessages((prev) => [...prev, data]);
             break;
           case "user-joined":
             createPeerConnection(data.userId, true);
@@ -132,17 +652,6 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
       wsRef.current?.close();
     };
   }, []);
-
-  // 🔑 Re-bind local video when toggling
-  useEffect(() => {
-    if (localVideoRef.current) {
-      if (isVideoOn) {
-        localVideoRef.current.srcObject = localStream.current;
-      } else {
-        localVideoRef.current.srcObject = null;
-      }
-    }
-  }, [isVideoOn]);
 
   const createPeerConnection = async (peerId, isInitiator, offerData = null) => {
     const pc = new RTCPeerConnection();
@@ -205,80 +714,67 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
     });
   };
 
-    const handleRatingSubmit = async (rating) => {
-      try {
-        const token = localStorage.getItem("token");
-        if (!token) {
-          alert("You must be logged in to rate a tutor.");
-          return;
-        }
-
-        // Send rating to backend
-        const res = await fetch(`${backendUrl}/api/profile/${session.tutorId._id}/rate`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // ✅ required for auth
-          },
-          body: JSON.stringify({ rating }),
-        });
-
-        if (!res.ok) {
-          const err = await res.json();
-          throw new Error(err.message || "Failed to submit rating");
-        }
-
-        const data = await res.json(); // contains updated tutor
-
-        // Close the rating modal
-        setShowRating(false);
-
-        // Clean up call
-        Object.values(peerConnections.current).forEach((pc) => pc.close());
-        peerConnections.current = {};
-        localStream.current?.getTracks().forEach((t) => t.stop());
-        wsRef.current?.close();
-        onLeave();
-
-        alert("Thanks for rating! 🎉");
-      } catch (err) {
-        console.error("Error submitting rating:", err);
-        alert(err.message);
+  const handleRatingSubmit = async (rating) => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("You must be logged in to rate a tutor.");
+        return;
       }
-    };
 
+      const res = await fetch(`${backendUrl}/api/profile/${session.tutorId._id}/rate`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ rating }),
+      });
 
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to submit rating");
+      }
+
+      setShowRating(false);
+      Object.values(peerConnections.current).forEach((pc) => pc.close());
+      peerConnections.current = {};
+      localStream.current?.getTracks().forEach((t) => t.stop());
+      wsRef.current?.close();
+      onLeave();
+
+      alert("Thanks for rating! 🎉");
+    } catch (err) {
+      console.error("Error submitting rating:", err);
+      alert(err.message);
+    }
+  };
 
   const handleEndCall = () => {
-    if(user._id!==session.tutorId){ 
+    if (user._id !== session.tutorId._id) {
       setShowRating(true);
-    }
-    else{  
+    } else {
       Object.values(peerConnections.current).forEach((pc) => pc.close());
       peerConnections.current = {};
       localStream.current?.getTracks().forEach((t) => t.stop());
       wsRef.current?.close();
       onLeave();
     }
-    
   };
 
- // ✅ Send chat message via WebSocket (stored in DB server-side)
   const sendMessage = () => {
-  if (chatMessage.trim() && wsRef.current?.readyState === WebSocket.OPEN) {
-    const newMessage = {
-      type: "chat-message",
-      roomId: session._id,
-      userId: user._id,
-      senderName: user.name,
-      message: chatMessage.trim(),
-    };
-
-    // only send to server, don't append locally
-    wsRef.current.send(JSON.stringify(newMessage));
-    setChatMessage("");
-  }
-};
+    if (chatMessage.trim() && wsRef.current?.readyState === WebSocket.OPEN) {
+      const newMessage = {
+        type: "chat-message",
+        roomId: session._id,
+        userId: user._id,
+        senderName: user.name,
+        message: chatMessage.trim(),
+      };
+      wsRef.current.send(JSON.stringify(newMessage));
+      setChatMessage("");
+    }
+  };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -349,32 +845,32 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
           }}
         >
           {/* Local Video */}
-          {isVideoOn ? (
-            <video
-              ref={localVideoRef}
-              autoPlay
-              muted
-              playsInline
-              style={{
-                width: remoteStreams.length ? "45%" : "100%",
-                height: "auto",
-                margin: "5px",
-                objectFit: "cover",
-              }}
+          {(!maximizedPeer || maximizedPeer === "local") && (
+            <VideoTile
+              id="local"
+              name={user.name}
+              stream={isVideoOn ? localStream.current : null}
+              isLocal
+              isVideoOn={isVideoOn}
+              maximizedPeer={maximizedPeer}
+              setMaximizedPeer={setMaximizedPeer}
             />
-          ) : (
-            <Box textAlign="center" color="white">
-              <Avatar sx={{ width: 80, height: 80, margin: "auto" }}>
-                {user.name.charAt(0)}
-              </Avatar>
-              <Typography mt={2}>Camera is off</Typography>
-            </Box>
           )}
 
           {/* Remote Videos */}
-          {remoteStreams.map(({ peerId, stream }) => (
-            <RemoteVideo key={peerId} stream={stream} />
-          ))}
+          {remoteStreams.map(({ peerId, stream }) =>
+            !maximizedPeer || maximizedPeer === peerId ? (
+              <VideoTile
+                key={peerId}
+                id={peerId}
+                name={peerId}
+                stream={stream}
+                isVideoOn={true}
+                maximizedPeer={maximizedPeer}
+                setMaximizedPeer={setMaximizedPeer}
+              />
+            ) : null
+          )}
 
           {/* Control Bar */}
           <Stack
@@ -458,15 +954,12 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
         )}
         <RatingCard
           open={showRating}
-          tutor={{ name: session.tutorId?.name }} // adjust depending on your session schema
+          tutor={{ name: session.tutorId?.name }}
           onSubmit={handleRatingSubmit}
         />
-        
       </Box>
     </Box>
-    
   );
 };
 
 export default VideoCall;
-
