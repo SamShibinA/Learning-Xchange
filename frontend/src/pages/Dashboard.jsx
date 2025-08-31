@@ -47,8 +47,9 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
         );
 
         let userSessions = [];
+
         if (user.role === "tutor") {
-          userSessions = sessionRes.data.filter((s) => s.tutorId === user._id);
+          userSessions = sessionRes.data.filter((s) => s.tutorId._id === user._id);
         } else {
           userSessions = sessionRes.data.filter(
             (s) =>

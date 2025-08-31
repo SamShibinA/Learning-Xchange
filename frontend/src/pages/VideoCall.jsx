@@ -469,3 +469,4 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
 };
 
 export default VideoCall;
+
