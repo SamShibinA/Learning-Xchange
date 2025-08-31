@@ -42,10 +42,10 @@ function SessionCard({
     hourlyRate,
   } = session;
 
-  const isOwner = userId === tutorId;
+  const isOwner = userId === (tutorId?._id||tutorId);
   const enrolledCount = enrolledLearners.length;
   const canEnroll = enrolledCount < maxLearners;
-  const canStart = status === "scheduled" && enrolledCount > 0;
+  const canStart = status === "scheduled" && (enrolledCount>0 && isOwner);
 
   return (
     <Card
@@ -201,16 +201,18 @@ function SessionCard({
           )}
 
           {/* Tutor start session */}
-          {status === "scheduled" && canStart && isOwner && (
-            <Button
-              variant="contained"
-              color="success"
-              fullWidth
-              onClick={() => onStartLive?.(_id)}
-            >
-              Start Session
-            </Button>
-          )}
+          {/* Tutor start session */}
+            {canStart && (
+              <Button
+                variant="contained"
+                color="success"
+                fullWidth
+                onClick={() => onStartLive?.(_id)}
+              >
+                Start Session
+              </Button>
+            )}
+
         </Box>
       </CardContent>
     </Card>
