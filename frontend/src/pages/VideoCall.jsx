@@ -22,6 +22,8 @@ import {
 } from "@mui/icons-material";
 import { useMediaQuery } from "@mui/material";
 import ChatBox from "./ChatBox";
+import RatingCard from "./RatingCard";
+
 
 const RemoteVideo = ({ stream }) => {
   const videoRef = useRef(null);
@@ -42,13 +44,13 @@ const RemoteVideo = ({ stream }) => {
   );
 };
 
-const VideoCall = ({ session, user, onLeave, backendUrl }) => {
+const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
   const localVideoRef = useRef(null);
   const [remoteStreams, setRemoteStreams] = useState([]);
   const wsRef = useRef(null);
   const peerConnections = useRef({});
   const localStream = useRef(null);
-
+  
   // UI state
   const [isVideoOn, setIsVideoOn] = useState(true);
   const [isAudioOn, setIsAudioOn] = useState(true);
@@ -56,6 +58,7 @@ const VideoCall = ({ session, user, onLeave, backendUrl }) => {
   const [chatMessage, setChatMessage] = useState("");
   const [chatMessages, setChatMessages] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showRating, setShowRating] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -202,16 +205,62 @@ const VideoCall = ({ session, user, onLeave, backendUrl }) => {
     });
   };
 
+    const handleRatingSubmit = async (rating) => {
+      try {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          alert("You must be logged in to rate a tutor.");
+          return;
+        }
+
+        // Send rating to backend
+        const res = await fetch(`${backendUrl}/api/profile/${session.tutorId}/rate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`, // ✅ required for auth
+          },
+          body: JSON.stringify({ rating }),
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.message || "Failed to submit rating");
+        }
+
+        const data = await res.json(); // contains updated tutor
+
+        // Close the rating modal
+        setShowRating(false);
+
+        // Clean up call
+        Object.values(peerConnections.current).forEach((pc) => pc.close());
+        peerConnections.current = {};
+        localStream.current?.getTracks().forEach((t) => t.stop());
+        wsRef.current?.close();
+        onLeave();
+
+        alert("Thanks for rating! 🎉");
+      } catch (err) {
+        console.error("Error submitting rating:", err);
+        alert(err.message);
+      }
+    };
+
+
+
   const handleEndCall = () => {
-    Object.values(peerConnections.current).forEach((pc) => pc.close());
-    peerConnections.current = {};
-
-    localStream.current?.getTracks().forEach((t) => t.stop());
-    if (localVideoRef.current) localVideoRef.current.srcObject = null;
-
-    setRemoteStreams([]);
-    wsRef.current?.close();
-    onLeave();
+    if(user._id!==session.tutorId){ 
+      setShowRating(true);
+    }
+    else{  
+      Object.values(peerConnections.current).forEach((pc) => pc.close());
+      peerConnections.current = {};
+      localStream.current?.getTracks().forEach((t) => t.stop());
+      wsRef.current?.close();
+      onLeave();
+    }
+    
   };
 
  // ✅ Send chat message via WebSocket (stored in DB server-side)
@@ -407,8 +456,15 @@ const VideoCall = ({ session, user, onLeave, backendUrl }) => {
             user={user}
           />
         )}
+        <RatingCard
+          open={showRating}
+          tutor={{ name: session.tutorName }} // adjust depending on your session schema
+          onSubmit={handleRatingSubmit}
+        />
+        
       </Box>
     </Box>
+    
   );
 };
 

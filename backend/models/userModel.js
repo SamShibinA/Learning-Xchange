@@ -10,8 +10,8 @@ const userSchema = new mongoose.Schema({
   skills: [String],
   bio: String,
   hourlyRate: Number,
-  rating: Number,
-  totalRatings: Number,
+  rating: {type:Number,default:0},
+  totalRatings:{type:Number,default:0},
   canCharge: { type: Boolean, default: false },
   interests: [String],
 }, { timestamps: true });

@@ -19,7 +19,7 @@ import VideoCall from "./pages/VideoCall";
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
 // ✅ Wrapper for session route
-function VideoCallWrapper({ user, onLeave }) {
+function VideoCallWrapper({ user, onLeave, onProfileEdit }) {
   const { id } = useParams();
   const location = useLocation();
 
@@ -32,6 +32,7 @@ function VideoCallWrapper({ user, onLeave }) {
       user={user}
       onLeave={onLeave}
       backendUrl={backendUrl}
+      onProfileEdit={onProfileEdit} 
     />
   );
 }
@@ -90,7 +91,7 @@ function AppRoutes({ user, setUser, loading }) {
             navigate(`/session/${session.id}`, { state: { session } })
           }
           onSchedule={() => navigate("/scheduler")}
-          onProfileEdit={() => navigate("/profile-setup")}
+          onProfileEdit={(updatedUser) => setUser(updatedUser)}
           onLogout={handleLogout}
         />
       )
@@ -138,6 +139,8 @@ function AppRoutes({ user, setUser, loading }) {
         <VideoCallWrapper
           user={user}
           onLeave={() => navigate("/dashboard")}
+
+          onProfileEdit={(updatedUser) => setUser(updatedUser)}
         />
       ) : (
         <Navigate to="/" />   // ✅ logged out → HomePage

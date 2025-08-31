@@ -42,4 +42,46 @@ const getTutorById=async(req,res)=>{
   }
 }
 
-module.exports = { updateProfile ,getTutorById};
+
+const rateTutor = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const { rating } = req.body;
+
+    if (!rating || rating < 0.5) {
+      return res.status(400).json({ message: "Rating must be at least 0.5" });
+    }
+
+    const tutor = await User.findById(tutorId);
+    if (!tutor) return res.status(404).json({ message: "Tutor not found" });
+    if (tutor.role !== "tutor") {
+      return res.status(403).json({ message: "User is not a tutor" });
+    }
+
+    // Calculate new average rating
+    const newTotalRatings = (tutor.totalRatings || 0) + 1;
+    const newAverageRating =
+      ((tutor.rating || 0) * (tutor.totalRatings || 0) + rating) /
+      newTotalRatings;
+
+    tutor.rating = newAverageRating;
+    tutor.totalRatings = newTotalRatings;
+
+    // If tutor reaches 4+ stars, unlock charging
+    if (tutor.rating >= 4 && !tutor.canCharge) {
+      tutor.canCharge = true;
+    }
+
+    await tutor.save();
+
+    res.json({
+      message: "Rating submitted successfully",
+      data: tutor,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { updateProfile ,getTutorById,rateTutor};

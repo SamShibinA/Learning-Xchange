@@ -200,14 +200,16 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
                     <Typography variant="subtitle2" color="text.secondary">
                       Hourly Rate
                     </Typography>
+
                     <Typography variant="h4" sx={{ mt: 1 }}>
-                      ${user.canCharge ? user.hourlyRate || 0 : 0}
+                      {user.rating && user.rating>=4.0 ? `₹${user.hourlyRate || 0}` : "₹0"}
                     </Typography>
-                    {!user.canCharge && (
+                    {(!user.rating || user.rating<=4.0) && (
                       <Typography variant="caption" color="warning.main">
                         Free until 4+ stars
                       </Typography>
                     )}
+
                     <Box sx={{ bgcolor: '#e8f5e9', p: 1, mt: 2, borderRadius: 1, display: 'inline-block' }}>
                       <DollarSign size={32} color="#2e7d32" />
                     </Box>
