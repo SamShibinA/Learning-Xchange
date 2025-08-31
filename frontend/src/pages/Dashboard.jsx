@@ -111,7 +111,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
       );
 
       setSessions((prev) =>
-        prev.map((item) => (item.id === sessionId ? res.data : item))
+        prev.map((item) => (item._id === sessionId ? res.data : item))
       );
 
       onJoinCall(res.data);
@@ -259,23 +259,23 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
               )}
             </Box>
             <Grid container spacing={3}>
-  {sessions.length > 0 ? (
-    sessions.map((s) => (
-      <Grid item xs={12} sm={6} md={3} key={s._id}>
-        <SessionCard
-          session={s}
-          userRole={user.role}
-          userId={user._id}
-          onEnroll={enrollInSession}
-          isEnrolled={
-            Array.isArray(s.enrolledLearners) &&
-            s.enrolledLearners.includes(user._id)
-          }
-          onStartLive={startLiveSession}
-          onJoin={onJoinCall}
-          detailed
-        />
-      </Grid>
+            {sessions.length > 0 ? (
+            sessions.map((s) => (
+            <Grid item xs={12} sm={6} md={3} key={s._id}>
+              <SessionCard
+                session={s}
+                userRole={user.role}
+                userId={user._id}
+                onEnroll={enrollInSession}
+                isEnrolled={
+                  Array.isArray(s.enrolledLearners) &&
+                  s.enrolledLearners.includes(user._id)
+                }
+                onStartLive={startLiveSession}
+                onJoin={onJoinCall}
+                detailed
+              />
+            </Grid>
     ))
   ) : (
     <Typography

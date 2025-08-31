@@ -11,11 +11,11 @@ import {
 import {
   Video,
   Star,
-  DollarSign,
   BookOpen,
   CheckCircle,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
 
 function SessionCard({
   session,
@@ -37,8 +37,9 @@ function SessionCard({
     enrolledLearners = [],
     tutorId,
     tutorName,
-    price,
     status,
+    tutorRating,
+    hourlyRate,
   } = session;
 
   const isOwner = userId === tutorId;
@@ -52,8 +53,8 @@ function SessionCard({
       sx={{
         borderRadius: 4,
         mb: 3,
-        width: 290, // fixed width
-        height: 340, // 🔹 reduced height (was 380)
+        width: 290,
+        height: 340,
         display: "flex",
         flexDirection: "column",
       }}
@@ -63,13 +64,13 @@ function SessionCard({
           p: 3,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "space-between", // keeps spacing tight
+          justifyContent: "space-between",
           height: "100%",
         }}
       >
         {/* Top Content */}
         <Box>
-          {/* Title with ellipsis */}
+          {/* Title */}
           <Typography
             variant="h6"
             fontWeight="600"
@@ -135,15 +136,17 @@ function SessionCard({
             ⏱ {duration} mins
           </Typography>
 
-          {price && (
-            <Box display="flex" alignItems="center" gap={1} mb={2}>
-              <DollarSign size={18} color="#16a34a" />
-              <Typography variant="body2" fontWeight="500">
-                {price}
-              </Typography>
-            </Box>
-          )}
+         
+          <Box display="flex" alignItems="center"  mb={2}>
+            <Typography variant="body2" fontWeight="500">
+              {session.tutorId?.rating >= 4.0 && session.tutorId?.hourlyRate > 0
+                ? `₹${session.tutorId.hourlyRate}/hr`
+                : "Free session"}
+            </Typography>
+          </Box>
 
+
+          {/* Status + learners */}
           <Box display="flex" gap={1} mb={2}>
             <Chip
               label={`${enrolledCount}/${maxLearners} learners`}
