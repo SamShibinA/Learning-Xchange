@@ -169,12 +169,20 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
           <Grid container spacing={4}>
             <Grid item xs={12} md={3}>
               <Paper elevation={1} sx={{ p: 3, bgcolor: "white" }}>
-                <Typography variant="subtitle2" color="text.secondary">
+                {/* <Typography variant="subtitle2" color="text.secondary">
                   {user.role === "tutor" ? "Total Sessions" : "Sessions Attended"}
                 </Typography>
                 <Typography variant="h4" sx={{ mt: 1 }}>
                   {user.role === "tutor" ? sessions.length : user.sessionsAttended || 0}
+                </Typography> */}
+
+                <Typography variant="subtitle2" color="text.secondary">
+                  Sessions Attended
                 </Typography>
+                <Typography variant="h4" sx={{ mt: 1 }}>
+                  {user.sessionsAttended || 0}
+                </Typography>
+
                 <Box sx={{ bgcolor: "#e3f2fd", p: 1, mt: 2, borderRadius: 1 }}>
                   <BookOpen size={32} color="#1976d2" />
                 </Box>
