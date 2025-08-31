@@ -214,7 +214,7 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
         }
 
         // Send rating to backend
-        const res = await fetch(`${backendUrl}/api/profile/${session.tutorId}/rate`, {
+        const res = await fetch(`${backendUrl}/api/profile/${session.tutorId._id}/rate`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -458,7 +458,7 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit  }) => {
         )}
         <RatingCard
           open={showRating}
-          tutor={{ name: session.tutorName }} // adjust depending on your session schema
+          tutor={{ name: session.tutorId?.name }} // adjust depending on your session schema
           onSubmit={handleRatingSubmit}
         />
         

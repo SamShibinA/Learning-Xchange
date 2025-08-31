@@ -28,7 +28,7 @@ const createSession = async (req, res) => {
 const getSessions = async (req, res) => {
   try {
     const sessions = await Session.find()
-    .populate("tutorId", "name hourlyRate rating");
+    .populate("tutorId", "name hourlyRate rating _id");
 
     res.status(200).json(sessions);
   } catch (error) {
