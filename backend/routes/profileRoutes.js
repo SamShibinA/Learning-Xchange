@@ -1,13 +1,24 @@
-const express = require('express');
-const { updateProfile,getTutorById,rateTutor} = require('../controllers/profileController');
-const { authenticateToken } = require('../middleware/authMiddleware');
+const express = require("express");
+const {
+  updateProfile,
+  getTutorById,
+  rateTutor,
+  getMyProfile,
+} = require("../controllers/profileController");
+const { authenticateToken } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
-router.post('/', authenticateToken, updateProfile);
+// Get logged-in user profile
+router.get("/me", authenticateToken, getMyProfile);
 
-router.get('/:tutorId',authenticateToken,getTutorById)
+// Update logged-in user profile
+router.put("/", authenticateToken, updateProfile);
 
-router.post('/:tutorId/rate', authenticateToken, rateTutor);
+// Get tutor by ID
+router.get("/:tutorId", authenticateToken, getTutorById);
+
+// Rate tutor
+router.post("/:tutorId/rate", authenticateToken, rateTutor);
 
 module.exports = router;

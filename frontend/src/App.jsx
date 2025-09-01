@@ -15,6 +15,7 @@ import Dashboard from "./pages/Dashboard";
 import ProfileSetup from "./pages/ProfileSetup";
 import SessionScheduler from "./pages/SessionScheduler";
 import VideoCall from "./pages/VideoCall";
+import ProfileEdit from "./pages/ProfileEdit";
 
 const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
@@ -115,6 +116,18 @@ function AppRoutes({ user, setUser, loading }) {
       )
     }
   />
+{/* 
+  <Route
+    path="/profile"
+    element={
+      !user ? (
+        <Navigate to="/" />   // ✅ logged out → HomePage
+      ) : (
+        <ProfileEdit />
+      )
+    }
+  /> */}
+
 
   {/* Session Scheduler */}
   <Route

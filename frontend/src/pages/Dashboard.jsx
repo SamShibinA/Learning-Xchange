@@ -1,6 +1,6 @@
 
-
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   AppBar,
@@ -28,7 +28,7 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
   const [sessions, setSessions] = useState([]);
   const [tutors, setTutors] = useState([]);
   const [tabIndex, setTabIndex] = useState(0);
-
+  const navigate=useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -139,7 +139,11 @@ const Dashboard = ({ user, onJoinCall, onSchedule, onProfileEdit, onLogout }) =>
             </Typography>
           </Box>
 
-          <Avatar sx={{ bgcolor: "primary.main", mr: 1 }}>
+          {/* <Avatar sx={{ bgcolor: "primary.main", mr: 1 ,cursor:"pointer"}}
+          onClick={()=>navigate("/profile")}>
+            {user.name.charAt(0).toUpperCase()}
+          </Avatar> */}
+          <Avatar sx={{ bgcolor: "primary.main", mr: 1 ,cursor:"pointer"}}>
             {user.name.charAt(0).toUpperCase()}
           </Avatar>
           <IconButton onClick={onLogout}>
