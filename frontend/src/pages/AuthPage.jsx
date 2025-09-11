@@ -373,21 +373,35 @@ const AuthPage = ({ onLogin }) => {
             />
 
             <TextField
-              label="Password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              fullWidth
-              margin="normal"
-              required
-              InputProps={{
-                endAdornment: (
-                  <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                  </IconButton>
-                ),
-              }}
-            />
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            fullWidth
+            margin="normal"
+            required
+            InputProps={{
+              endAdornment: (
+                <IconButton
+                  onClick={() => setShowPassword(!showPassword)}
+                  edge="end"
+                  sx={{
+                    color: 'text.secondary',
+                    '&:hover': { color: 'primary.main' },
+                    mr: 0.5, // slight spacing from the edge
+                  }}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              ),
+            }}
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 3,
+              },
+            }}
+          />
+
 
             {error && (
               <Alert severity="error" sx={{ mt: 2 }}>
