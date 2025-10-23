@@ -12,6 +12,7 @@ const userSchema = new mongoose.Schema({
   hourlyRate: Number,
   rating: {type:Number,default:0},
   totalRatings:{type:Number,default:0},
+  ratedBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // Track which learners have rated this tutor
   canCharge: { type: Boolean, default: false },
   interests: [String],
 }, { timestamps: true });

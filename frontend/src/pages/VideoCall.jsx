@@ -109,6 +109,9 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit }) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showRating, setShowRating] = useState(false);
   const [maximizedPeer, setMaximizedPeer] = useState(null);
+  const [hasRated, setHasRated] = useState(false);
+  const [hasRatedThisTutor, setHasRatedThisTutor] = useState(false);
+  const [ratingCheckComplete, setRatingCheckComplete] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -117,6 +120,64 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit }) => {
     { id: "local", name: user.name, isHost: session.tutorId === user._id },
     ...remoteStreams.map((s) => ({ id: s.peerId, name: s.peerId })),
   ];
+
+  // Check if learner has already rated this tutor
+  useEffect(() => {
+    const checkRatingStatus = async () => {
+      if (user.role === 'learner' && session.tutorId?._id) {
+        try {
+          // First check local storage as backup
+          const localRatingKey = `rated_${user._id}_${session.tutorId._id}`;
+          const hasRatedLocally = localStorage.getItem(localRatingKey) === 'true';
+          
+          if (hasRatedLocally) {
+            console.log("Found rating in local storage, setting hasRatedThisTutor to true");
+            setHasRatedThisTutor(true);
+            setRatingCheckComplete(true);
+            return;
+          }
+
+          const token = localStorage.getItem("token");
+          if (!token) return;
+
+          const res = await fetch(`${backendUrl}/api/profile/${session.tutorId._id}/rating-status`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            console.log("Rating status check from server:", data); // Debug log
+            setHasRatedThisTutor(data.hasRated);
+            setRatingCheckComplete(true);
+          } else {
+            console.error("Failed to check rating status:", res.status);
+            setRatingCheckComplete(true); // Mark as complete even if failed
+          }
+        } catch (err) {
+          console.error("Error checking rating status:", err);
+          setRatingCheckComplete(true); // Mark as complete even if failed
+        }
+      } else {
+        // If not a learner, set to false
+        setHasRatedThisTutor(false);
+        setRatingCheckComplete(true);
+      }
+    };
+
+    checkRatingStatus();
+  }, [user.role, session.tutorId?._id, backendUrl, user._id]);
+
+  // Cleanup effect to reset rating states when component unmounts
+  useEffect(() => {
+    return () => {
+      setHasRated(false);
+      setHasRatedThisTutor(false);
+      setRatingCheckComplete(false);
+      setShowRating(false);
+    };
+  }, []);
 
   // --- Init Media + Signaling ---
   useEffect(() => {
@@ -249,6 +310,16 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit }) => {
         return;
       }
 
+      // Immediately set states to prevent multiple submissions
+      setHasRated(true);
+      setHasRatedThisTutor(true);
+      setShowRating(false);
+      
+      // Save to local storage as backup
+      const localRatingKey = `rated_${user._id}_${session.tutorId._id}`;
+      localStorage.setItem(localRatingKey, 'true');
+      console.log("Saved rating to local storage:", localRatingKey);
+
       const res = await fetch(`${backendUrl}/api/profile/${session.tutorId._id}/rate`, {
         method: "POST",
         headers: {
@@ -260,10 +331,17 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit }) => {
 
       if (!res.ok) {
         const err = await res.json();
+        // If rating failed, reset the states and remove from local storage
+        setHasRated(false);
+        setHasRatedThisTutor(false);
+        setShowRating(true);
+        const localRatingKey = `rated_${user._id}_${session.tutorId._id}`;
+        localStorage.removeItem(localRatingKey);
+        console.log("Removed rating from local storage due to error:", localRatingKey);
         throw new Error(err.message || "Failed to submit rating");
       }
 
-      setShowRating(false);
+      console.log("Rating submitted successfully, hasRatedThisTutor set to true"); // Debug log
       Object.values(peerConnections.current).forEach((pc) => pc.close());
       peerConnections.current = {};
       localStream.current?.getTracks().forEach((t) => t.stop());
@@ -277,10 +355,29 @@ const VideoCall = ({ session, user, onLeave, backendUrl, onProfileEdit }) => {
     }
   };
 
+  // Function to check if user has already rated this tutor
+  const hasUserRatedThisTutor = () => {
+    const localRatingKey = `rated_${user._id}_${session.tutorId._id}`;
+    const hasRatedLocally = localStorage.getItem(localRatingKey) === 'true';
+    
+    return hasRatedThisTutor || hasRated || hasRatedLocally;
+  };
+
   const handleEndCall = () => {
-    if (user._id !== session.tutorId._id) {
+    const userHasRated = hasUserRatedThisTutor();
+    
+    console.log("handleEndCall - user.role:", user.role, "hasRatedThisTutor:", hasRatedThisTutor, "hasRated:", hasRated, "hasRatedLocally:", localStorage.getItem(`rated_${user._id}_${session.tutorId._id}`) === 'true', "userHasRated:", userHasRated, "ratingCheckComplete:", ratingCheckComplete); // Debug log
+    
+    // Only show rating if user is learner AND hasn't rated this tutor before AND rating check is complete AND rating dialog is not already open
+    if (user.role === 'learner' && !userHasRated && ratingCheckComplete && !showRating) {
+      console.log("Showing rating dialog"); // Debug log
       setShowRating(true);
     } else {
+      console.log("Ending call without rating - Reason:", {
+        notLearner: user.role !== 'learner',
+        alreadyRated: userHasRated,
+        ratingCheckNotComplete: !ratingCheckComplete
+      }); // Debug log
       Object.values(peerConnections.current).forEach((pc) => pc.close());
       peerConnections.current = {};
       localStream.current?.getTracks().forEach((t) => t.stop());

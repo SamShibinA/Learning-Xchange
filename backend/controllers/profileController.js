@@ -47,6 +47,7 @@ const rateTutor = async (req, res) => {
   try {
     const { tutorId } = req.params;
     const { rating } = req.body;
+    const learnerId = req.user.userId;
 
     if (!rating || rating < 0.5) {
       return res.status(400).json({ message: "Rating must be at least 0.5" });
@@ -58,6 +59,11 @@ const rateTutor = async (req, res) => {
       return res.status(403).json({ message: "User is not a tutor" });
     }
 
+    // Check if learner has already rated this tutor
+    if (tutor.ratedBy && tutor.ratedBy.includes(learnerId)) {
+      return res.status(400).json({ message: "You have already rated this tutor" });
+    }
+
     // Calculate new average rating
     const newTotalRatings = (tutor.totalRatings || 0) + 1;
     const newAverageRating =
@@ -66,6 +72,13 @@ const rateTutor = async (req, res) => {
 
     tutor.rating = newAverageRating;
     tutor.totalRatings = newTotalRatings;
+    
+    // Add learner to ratedBy array
+    if (!tutor.ratedBy) {
+      tutor.ratedBy = [];
+    }
+    tutor.ratedBy.push(learnerId);
+    console.log("Added learner to ratedBy array:", learnerId, "New ratedBy:", tutor.ratedBy); // Debug log
 
     // If tutor reaches 4+ stars, unlock charging
     if (tutor.rating >= 4 && !tutor.canCharge) {
@@ -84,4 +97,26 @@ const rateTutor = async (req, res) => {
   }
 };
 
-module.exports = { updateProfile ,getTutorById,rateTutor};
+const checkRatingStatus = async (req, res) => {
+  try {
+    const { tutorId } = req.params;
+    const learnerId = req.user.userId;
+
+    console.log("Checking rating status - tutorId:", tutorId, "learnerId:", learnerId); // Debug log
+
+    const tutor = await User.findById(tutorId);
+    if (!tutor) return res.status(404).json({ message: "Tutor not found" });
+
+    const hasRated = tutor.ratedBy && tutor.ratedBy.includes(learnerId);
+    console.log("Tutor ratedBy array:", tutor.ratedBy, "hasRated:", hasRated); // Debug log
+
+    res.json({
+      hasRated: hasRated
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { updateProfile, getTutorById, rateTutor, checkRatingStatus };

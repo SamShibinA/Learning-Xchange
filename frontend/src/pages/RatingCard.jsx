@@ -14,11 +14,17 @@ import {
 
 const RatingCard = ({ open, onSubmit, tutor }) => {
   const [value, setValue] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const theme = useTheme();
 
-  const handleSubmit = () => {
-    if (value > 0) {
-      onSubmit(value);
+  const handleSubmit = async () => {
+    if (value > 0 && !isSubmitting) {
+      setIsSubmitting(true);
+      try {
+        await onSubmit(value);
+      } catch (error) {
+        setIsSubmitting(false);
+      }
     }
   };
 
@@ -82,7 +88,7 @@ const RatingCard = ({ open, onSubmit, tutor }) => {
           onClick={handleSubmit}
           variant="contained"
           color="primary"
-          disabled={value === 0}
+          disabled={value === 0 || isSubmitting}
           sx={{
             px: 4,
             py: 1,
@@ -90,7 +96,7 @@ const RatingCard = ({ open, onSubmit, tutor }) => {
             fontWeight: "bold",
           }}
         >
-          Submit
+          {isSubmitting ? "Submitting..." : "Submit"}
         </Button>
       </DialogActions>
     </Dialog>
